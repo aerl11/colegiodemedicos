@@ -1,0 +1,334 @@
+<!--
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Certificados - COMEZU</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .header { border-bottom: 3px solid #1d4ed8; padding-bottom: 15px; margin-bottom: 25px; }
+        .header h1 { margin: 0; color: #0f172a; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
+
+        /* Barra de búsqueda / Selección */
+        .search-box { background: #f1f5f9; padding: 20px; border-radius: 6px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
+        .search-box label { font-weight: 600; color: #334155; }
+        .search-box select { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 15px; background-color: white; }
+        .btn-buscar { background-color: #1d4ed8; color: white; border: none; padding: 10px 20px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .btn-buscar:hover { background-color: #1e40af; }
+
+        /* Contenedor de acciones del listado */
+        .list-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .list-actions h2 { margin: 0; font-size: 20px; }
+        .button-group { display: flex; gap: 10px; } /* 🌟 Contenedor para alinear los botones juntos */
+
+        /* Tabla de Participantes */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background-color: #0f172a; color: white; font-weight: 500; }
+        tr:hover { background-color: #f8fafc; }
+
+        /* Botones de acción */
+        .btn-download { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; transition: background 0.2s; }
+        .btn-download:hover { background-color: #059669; }
+
+        .btn-pdf { display: inline-block; background-color: #ef4444; color: white; text-decoration: none; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 4px; transition: background 0.2s; }
+        .btn-pdf:hover { background-color: #dc2626; }
+
+        /* 🌟 Nuevo estilo para el botón de conferencistas (Azul) */
+        .btn-blue { display: inline-block; background-color: #1d4ed8; color: white; text-decoration: none; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 4px; transition: background 0.2s; }
+        .btn-blue:hover { background-color: #1e40af; }
+
+        .alert { padding: 15px; background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; border-radius: 4px; }
+        .badge-pago { font-family: monospace; background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #334155; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>COLEGIO DE MÉDICOS DEL ESTADO ZULIA</h1>
+        <p>Panel de Control - Gestión de Certificados y Reportes de Jornadas</p>
+    </div>
+
+    <form method="GET" action="{% url 'panel_certificados' %}" class="search-box">
+        <label for="jornada_id">Seleccione la Jornada Científica:</label>
+        <select name="jornada_id" id="jornada_id" required>
+            <option value="">-- Seleccione una opción --</option>
+            {% for j in jornadas %}
+                <option value="{{ j.id }}" {% if j.id|stringformat:"s" == request.GET.jornada_id %}selected{% endif %}>
+                    {{ j.nombre }} ({{ j.fecha_inicio|date:"d/m/Y" }})
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-buscar">Ver Participantes</button>
+    </form>
+
+    {% if jornada_actual %}
+        <div class="list-actions">
+            <h2>Participantes Inscritos en: <span style="color: #1d4ed8;">{{ jornada_actual.nombre }}</span></h2>
+            {% if inscritos %}
+                <div class="button-group">
+                    <a href="/api/inscripcion/jornada/{{ jornada_actual.id }}/reporte-pdf/" class="btn-pdf">
+                        📄 Exportar Reporte de Pagos (PDF)
+                    </a>
+
+                    <a href="{% url 'reporte_conferencistas_pdf' jornada_actual.id %}" class="btn-blue">
+                        👨‍⚕️ Reporte Conferencistas (PDF)
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if inscritos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre Completo</th>
+                        <th>Tipo</th>
+                        <th>Sociedad / Rol</th>
+                        <th>Contacto</th>
+                        <th>Información de Pago</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ins in inscritos %}
+                    <tr>
+                        <td><b>{{ ins.usuario.perfil.cedula|default:"-" }}</b></td>
+                        <td>{{ ins.usuario.first_name }} {{ ins.usuario.last_name }}</td>
+                        <td>{{ ins.usuario.perfil.get_tipo_display }}</td>
+
+                        <td>
+                            <span style="display:block; font-size:12px; color:#64748b;">📞 {{ ins.usuario.perfil.telefono|default:"-" }}</span>
+                            <span style="display:block; font-size:12px; color:#64748b;">✉️ {{ ins.usuario.email }}</span>
+                        </td>
+
+                        <td>
+                            {% if ins.usuario.perfil.conferencista == 'C' %}
+                                <span style="color:#1d4ed8; font-size:12px; font-weight:600;">✨ Conferencista (Exento)</span>
+                            {% elif ins.pago %}
+                                <span style="display:block;">Ref: <span class="badge-pago">{{ ins.pago.referencia }}</span></span>
+                                <span style="display:block; font-size:12px; color:#059669; font-weight:600;">Monto: {{ ins.pago.monto }} Bs</span>
+                                <span style="display:block; font-size:11px; color:#64748b;">Fecha: {{ ins.pago.fecha_pago|date:"d/m/Y" }}</span>
+                            {% else %}
+                                <span style="color:#ef4444; font-size:12px; font-weight:600;">⚠️ Sin registro de pago</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a href="/api/inscripcion/{{ ins.id }}/certificado/" class="btn-download">
+                                📥 Diploma
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="padding: 20px; background: #f8fafc; border-radius: 4px; border: 1px dashed #cbd5e1; text-align: center; color: #64748b;">
+                No hay participantes registrados ni aprobados para esta jornada todavía.
+            </p>
+        {% endif %}
+    {% else %}
+        <div class="alert">
+            Por favor, elija una jornada científica en la barra superior para desplegar el listado oficial de asistencia.
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Certificados - COMEZU</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .header { border-bottom: 3px solid #1d4ed8; padding-bottom: 15px; margin-bottom: 25px; }
+        .header h1 { margin: 0; color: #0f172a; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
+
+        /* Barra de búsqueda / Selección */
+        .search-box { background: #f1f5f9; padding: 20px; border-radius: 6px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
+        .search-box label { font-weight: 600; color: #334155; }
+        .search-box select { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 15px; background-color: white; }
+        .btn-buscar { background-color: #1d4ed8; color: white; border: none; padding: 10px 20px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .btn-buscar:hover { background-color: #1e40af; }
+
+        /* 🌟 Nuevo estilo para el filtro dinámico de participantes */
+        .filter-container { background: #ffffff; padding: 0 0 15px 0; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 400px; }
+        .input-filter { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .input-filter:focus { border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15); }
+
+        /* Contenedor de acciones del listado */
+        .list-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .list-actions h2 { margin: 0; font-size: 20px; }
+        .button-group { display: flex; gap: 10px; }
+
+        /* Tabla de Participantes */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background-color: #0f172a; color: white; font-weight: 500; }
+        tr:hover { background-color: #f8fafc; }
+
+        /* Botones de acción */
+        .btn-download { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 4px; transition: background 0.2s; }
+        .btn-download:hover { background-color: #059669; }
+
+        .btn-pdf { display: inline-block; background-color: #ef4444; color: white; text-decoration: none; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 4px; transition: background 0.2s; }
+        .btn-pdf:hover { background-color: #dc2626; }
+
+        .btn-blue { display: inline-block; background-color: #1d4ed8; color: white; text-decoration: none; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 4px; transition: background 0.2s; }
+        .btn-blue:hover { background-color: #1e40af; }
+
+        .alert { padding: 15px; background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; border-radius: 4px; }
+        .badge-pago { font-family: monospace; background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #334155; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>COLEGIO DE MÉDICOS DEL ESTADO ZULIA</h1>
+        <p>Panel de Control - Gestión de Certificados y Reportes de Jornadas</p>
+    </div>
+
+    <form method="GET" action="{% url 'panel_certificados' %}" class="search-box">
+        <label for="jornada_id">Seleccione la Jornada Científica:</label>
+        <select name="jornada_id" id="jornada_id" required>
+            <option value="">-- Seleccione una opción --</option>
+            {% for j in jornadas %}
+                <option value="{{ j.id }}" {% if j.id|stringformat:"s" == request.GET.jornada_id %}selected{% endif %}>
+                    {{ j.nombre }} ({{ j.fecha_inicio|date:"d/m/Y" }})
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-buscar">Ver Participantes</button>
+    </form>
+
+    {% if jornada_actual %}
+        <div class="list-actions">
+            <h2>Participantes Inscritos en: <span style="color: #1d4ed8;">{{ jornada_actual.nombre }}</span></h2>
+            {% if inscritos %}
+                <div class="button-group">
+                    <a href="/api/inscripcion/jornada/{{ jornada_actual.id }}/reporte-pdf/" class="btn-pdf">
+                        📄 Exportar Reporte de Pagos (PDF)
+                    </a>
+
+                    <a href="{% url 'reporte_conferencistas_pdf' jornada_actual.id %}" class="btn-blue">
+                        👨‍⚕️ Reporte Conferencistas (PDF)
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if inscritos %}
+            <div class="filter-container">
+                <input type="text" id="inputBuscar" class="input-filter" placeholder="🔍 Buscar por nombre o apellido..." onkeyup="filtrarTabla()">
+            </div>
+
+            <table id="tablaParticipantes">
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre Completo</th>
+                        <th>Tipo</th>
+                        <th>Sociedad / Rol</th>
+                        <th>Contacto</th>
+                        <th>Información de Pago</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ins in inscritos %}
+                    <tr>
+                        <td><b>{{ ins.usuario.perfil.cedula|default:"-" }}</b></td>
+                        <td class="nombre-participante">{{ ins.usuario.first_name }} {{ ins.usuario.last_name }}</td>
+                        <td>{{ ins.usuario.perfil.get_tipo_display }}</td>
+                        <td style="font-size:12px;">
+                            {{ ins.usuario.perfil.sociedad|default:"-" }}
+                            {% if ins.usuario.perfil.coordinador %}
+                                <span style="display:block; color:#1d4ed8; font-weight:600;">★ {% if ins.usuario.perfil.genero == 'F' %}Coordinadora{% else %}Coordinador{% endif %}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span style="display:block; font-size:12px; color:#64748b;">📞 {{ ins.usuario.perfil.telefono|default:"-" }}</span>
+                            <span style="display:block; font-size:12px; color:#64748b;">✉️ {{ ins.usuario.email }}</span>
+                        </td>
+
+                        <td>
+                            {% if ins.usuario.perfil.conferencista == 'C' %}
+                                <span style="color:#1d4ed8; font-size:12px; font-weight:600;">✨ Conferencista (Exento)</span>
+                            {% elif ins.pago %}
+                                <span style="display:block;">Ref: <span class="badge-pago">{{ ins.pago.referencia }}</span></span>
+                                <span style="display:block; font-size:12px; color:#059669; font-weight:600;">Monto: {{ ins.pago.monto }} Bs</span>
+                                <span style="display:block; font-size:11px; color:#64748b;">Fecha: {{ ins.pago.fecha_pago|date:"d/m/Y" }}</span>
+                            {% else %}
+                                <span style="color:#ef4444; font-size:12px; font-weight:600;">⚠️ Sin registro de pago</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a href="/api/inscripcion/{{ ins.id }}/certificado/" class="btn-download">
+                                📥 Diploma
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </ajax>
+        {% else %}
+            <p style="padding: 20px; background: #f8fafc; border-radius: 4px; border: 1px dashed #cbd5e1; text-align: center; color: #64748b;">
+                No hay participantes registrados ni aprobados para esta jornada todavía.
+            </p>
+        {% endif %}
+    {% else %}
+        <div class="alert">
+            Por favor, elija una jornada científica en la barra superior para desplegar el listado oficial de asistencia.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function filtrarTabla() {
+    // Capturamos el texto ingresado por el usuario y lo pasamos a minúsculas
+    let input = document.getElementById("inputBuscar");
+    let filter = input.value.toLowerCase();
+
+    // Obtenemos la tabla y todas las filas del cuerpo (tbody)
+    let table = document.getElementById("tablaParticipantes");
+    let tr = table.getElementsByTagName("tr");
+
+    // Recorremos cada fila (empezando desde 1 para omitir el thead)
+    for (let i = 1; i < tr.length; i++) {
+        // Buscamos la celda que contiene el nombre completo
+        let tdNombre = tr[i].getElementsByClassName("nombre-participante")[0];
+
+        if (tdNombre) {
+            let textoNombre = tdNombre.textContent || tdNombre.innerText;
+
+            // Si el nombre contiene los caracteres del buscador, se muestra la fila; si no, se oculta
+            if (textoNombre.toLowerCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+}
+</script>
+
+</body>
+</html>

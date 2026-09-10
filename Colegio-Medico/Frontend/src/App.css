@@ -1,0 +1,66 @@
+.app-container {
+  width: 100%;
+  height: 100vh;
+}
+
+.auth-loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0f172a;
+  min-height: 100vh;
+}
+
+.auth-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem;
+  border-radius: 1.25rem;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: authFadeIn 0.3s ease-out;
+}
+
+.auth-loader-logo {
+  width: 72px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.auth-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: authSpin 0.8s linear infinite;
+}
+
+.auth-loader-text {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+@keyframes authSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

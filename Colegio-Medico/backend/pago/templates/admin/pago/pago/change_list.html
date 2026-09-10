@@ -1,0 +1,15 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+<ul class="object-tools">
+  <li>
+    <a href="descargar-reporte-general-pdf/" class="historylink"
+      style="background: #1e3a8a !important; color: #ffffff !important; font-weight: bold !important; border-radius: 4px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+      📄 Descargar Reporte PDF Completo
+    </a>
+  </li>
+  {% block object-tools-items %}
+  {{ block.super }}
+  {% endblock %}
+</ul>
+{% endblock %}
