@@ -69,6 +69,19 @@ async function apiFetch(endpoint, options = {}) {
   return response;
 }
 
+// Helper: valida que la respuesta sea JSON; si el servidor devuelve HTML
+// (página de error de Render, backend durmiendo, URL incorrecta, etc.) lanza
+// un mensaje claro en vez del críptico "Unexpected token '<'".
+async function parseJsonOrThrow(res) {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      `El servidor no respondió con JSON (HTTP ${res.status}). Posibles causas: la URL del API es incorrecta, o el backend de Render está despertando de su suspensión. Intenta de nuevo en unos segundos.`
+    );
+  }
+  return res.json();
+}
+
 // ---------- Renovar token de acceso ----------
 
 async function refreshAccessToken() {
@@ -104,7 +117,7 @@ export async function login(username, password) {
     body: JSON.stringify({ username, password }),
   });
 
-  const data = await res.json();
+  const data = await parseJsonOrThrow(res);
 
   if (!res.ok) {
     // Django devuelve { detail: "..." } o { non_field_errors: [...] }
@@ -173,7 +186,7 @@ export async function register(formData) {
     body: JSON.stringify(formData),
   });
 
-  const data = await res.json();
+  const data = await parseJsonOrThrow(res);
 
   if (!res.ok) {
     // Devuelve el primer mensaje de error del servidor
