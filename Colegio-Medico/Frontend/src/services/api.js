@@ -5,7 +5,7 @@
 
 // URL del backend. En desarrollo apunta a localhost; en producción define
 // VITE_API_URL en el archivo .env del frontend (ej: VITE_API_URL=https://mi-backend.onrender.com/api)
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://colegiodemedicos.onrender.com/api';
 
 // ---------- Helpers de almacenamiento de tokens ----------
 
