@@ -98,7 +98,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://neondb_owner:npg_zY1DK5ReWwHZ@ep-quiet-sky-ayca1wuz-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel',
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
     )
