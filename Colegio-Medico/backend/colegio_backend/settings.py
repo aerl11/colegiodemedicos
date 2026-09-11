@@ -88,15 +88,8 @@ WSGI_APPLICATION = 'colegio_backend.wsgi.application'
 
 # CORS - Permite peticiones desde el frontend React
 # En producción agrega en .env: CORS_ALLOWED_ORIGINS=https://tu-frontend.onrender.com
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    # Frontend desplegado en Render (fallback si no se define la variable de entorno)
-    'https://colegiodemedicos-1.onrender.com',
-] + [o.strip() for o in env('CORS_ALLOWED_ORIGINS', default='').split(',') if o.strip()]
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL', default=False)
-
+ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
