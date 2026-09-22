@@ -583,18 +583,17 @@ const Register = ({ onBack }) => {
                           const local = formData.email ? formData.email.split('@')[0] : '';
                           handleChange({ target: { name: 'email', value: local ? `${local}@${domain}` : '' } });
                         }}
-                        className="register-input"
+                        className="email-domain-select"
                         style={{
                           position: 'absolute',
-                          right: '10px',
+                          right: '8px',
                           top: '50%',
                           transform: 'translateY(-50%)',
-                          width: '160px',
-                          cursor: 'pointer'
+                          width: '150px'
                         }}
                       >
                         {EMAIL_DOMAINS.map((d) => (
-                          <option key={d} value={d}>@{d}</option>
+                          <option key={d} value={d}>{d}</option>
                         ))}
                       </select>
                     </div>
