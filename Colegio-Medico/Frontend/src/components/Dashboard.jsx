@@ -363,17 +363,34 @@ const Dashboard = ({ onLogout }) => {
 
     setProgramacionLoading(true);
     setProgramacionError('');
+    let exitosas = 0;
+    const errores = [];
     try {
+      // Subir cada imagen de forma independiente: si una falla, las demás continúan
       for (const file of files) {
-        const fd = new FormData();
-        fd.append('jornada', programacionModal.jornada.id);
-        fd.append('imagen', file);
-        fd.append('titulo', '');
-        await createProgramacion(fd);
+        try {
+          const fd = new FormData();
+          fd.append('jornada', programacionModal.jornada.id);
+          fd.append('imagen', file);
+          fd.append('titulo', '');
+          await createProgramacion(fd);
+          exitosas += 1;
+        } catch (err) {
+          errores.push(`${file.name}: ${err.message || 'error'}`);
+        }
       }
+
+      // Refrescar la lista completa desde el servidor
       const actualizadas = await getProgramaciones(programacionModal.jornada.id);
-      setProgramacionModal(prev => ({ ...prev, imagenes: actualizadas }));
+      const lista = Array.isArray(actualizadas) ? actualizadas : (actualizadas.results || []);
+      setProgramacionModal(prev => ({ ...prev, imagenes: lista }));
       fetchData(); // refrescar el contador de programaciones embebidas
+
+      if (errores.length > 0) {
+        setProgramacionError(
+          `Se subieron ${exitosas} de ${files.length} imágenes. Errores: ${errores.join(' | ')}`
+        );
+      }
     } catch (err) {
       setProgramacionError(err.message || 'Error al subir la programación.');
     } finally {
@@ -916,7 +933,7 @@ const Dashboard = ({ onLogout }) => {
                             )}
                           </div>
                           <div className="jornada-card-programacion-hint">
-                            📋 Ver Programación {(jornada.programaciones || []).length > 0 && `(${jornada.programaciones.length})`}
+                            Ver Programación {(jornada.programaciones || []).length > 0 && `(${jornada.programaciones.length})`}
                           </div>
                         </button>
                         <div className="jornada-card-footer">
