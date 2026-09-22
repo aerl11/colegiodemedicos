@@ -182,9 +182,11 @@ const Register = ({ onBack }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // El teléfono solo acepta números (máximo 12 dígitos)
+    const finalValue = name === 'telefono' ? value.replace(/\D/g, '').slice(0, 12) : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }));
 
     // Limpiar error del campo modificado
@@ -236,7 +238,11 @@ const Register = ({ onBack }) => {
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = 'El correo no es válido';
       }
-      if (!formData.telefono.trim()) newErrors.telefono = 'El teléfono es requerido';
+      if (!formData.telefono.trim()) {
+        newErrors.telefono = 'El teléfono es requerido';
+      } else if (!/^\d{12}$/.test(formData.telefono.trim())) {
+        newErrors.telefono = 'El teléfono debe tener exactamente 12 dígitos numéricos';
+      }
     } else if (step === 3) {
       if (!formData.username.trim()) newErrors.username = 'El nombre de usuario es requerido';
       if (!formData.password) newErrors.password = 'La contraseña es requerida';
@@ -557,7 +563,8 @@ const Register = ({ onBack }) => {
                       <input
                         type="text"
                         name="telefono"
-                        placeholder="Teléfono"
+                        placeholder="Teléfono (12 dígitos)"
+                        maxLength={12}
                         className={`register-input ${errors.telefono ? 'input-error' : ''}`}
                         value={formData.telefono}
                         onChange={handleChange}
