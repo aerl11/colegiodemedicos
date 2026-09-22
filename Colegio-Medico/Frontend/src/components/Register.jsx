@@ -160,6 +160,21 @@ const Register = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState({});
+  const [emailDomain, setEmailDomain] = useState('gmail.com');
+
+  const EMAIL_DOMAINS = [
+    'gmail.com',
+    'hotmail.com',
+    'yahoo.com',
+    'outlook.com',
+    'live.com',
+    'icloud.com',
+    'aol.com',
+    'protonmail.com',
+    'hotmail.es',
+    'yahoo.es',
+    'hotmail.co.uk'
+  ];
 
   const [formData, setFormData] = useState({
     tipo: '', // '' = Seleccionar opción, 'D' = Médico, 'E' = Estudiante
@@ -235,8 +250,12 @@ const Register = ({ onBack }) => {
     } else if (step === 2) {
       if (!formData.email.trim()) {
         newErrors.email = 'El correo electrónico es requerido';
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = 'El correo no es válido';
+      } else {
+        const local = formData.email.split('@')[0];
+        const domain = formData.email.split('@')[1];
+        if (!local || !domain || !EMAIL_DOMAINS.includes(domain)) {
+          newErrors.email = 'El correo no es válido';
+        }
       }
       if (!formData.telefono.trim()) {
         newErrors.telefono = 'El teléfono es requerido';
@@ -545,13 +564,39 @@ const Register = ({ onBack }) => {
                     <div className="input-with-icon-wrapper">
                       <div className="input-icon"><MailIcon /></div>
                       <input
-                        type="email"
+                        type="text"
                         name="email"
                         placeholder="Correo electrónico"
                         className={`register-input ${errors.email ? 'input-error' : ''}`}
-                        value={formData.email}
-                        onChange={handleChange}
+                        value={formData.email ? formData.email.split('@')[0] : ''}
+                        onChange={(e) => {
+                          const local = e.target.value.replace(/@/g, '');
+                          handleChange({ target: { name: 'email', value: local ? `${local}@${emailDomain}` : '' } });
+                        }}
+                        style={{ paddingRight: '170px' }}
                       />
+                      <select
+                        value={emailDomain}
+                        onChange={(e) => {
+                          const domain = e.target.value;
+                          setEmailDomain(domain);
+                          const local = formData.email ? formData.email.split('@')[0] : '';
+                          handleChange({ target: { name: 'email', value: local ? `${local}@${domain}` : '' } });
+                        }}
+                        className="register-input"
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: '160px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {EMAIL_DOMAINS.map((d) => (
+                          <option key={d} value={d}>@{d}</option>
+                        ))}
+                      </select>
                     </div>
                     {errors.email && <span className="field-error-text">{errors.email}</span>}
                   </div>
@@ -563,7 +608,7 @@ const Register = ({ onBack }) => {
                       <input
                         type="text"
                         name="telefono"
-                        placeholder="Teléfono (12 dígitos)"
+                        placeholder="Teléfono"
                         maxLength={12}
                         className={`register-input ${errors.telefono ? 'input-error' : ''}`}
                         value={formData.telefono}
