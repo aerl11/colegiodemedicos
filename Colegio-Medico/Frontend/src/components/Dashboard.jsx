@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import logoUrl from '../assets/emblema.png';
-import { getJornadas, getInscripciones, createPago, logout, createJornada, updateJornada, deleteJornada, getPagos, getAccessToken, getUsers, createUser, updateUser, deleteUser, downloadReportePagosPdf } from '../services/api';
+import { getJornadas, getInscripciones, createPago, logout, createJornada, updateJornada, deleteJornada, getPagos, getAccessToken, getUsers, createUser, updateUser, deleteUser, downloadReportePagosPdf, getProgramaciones, createProgramacion, deleteProgramacion } from '../services/api';
 
 /* ── Iconos ── */
 const LogOutIcon = () => (
@@ -163,6 +163,11 @@ const Dashboard = ({ onLogout }) => {
   const [error, setError] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null); // { url, title }
+
+  // Estado del modal de Programación de Jornada (imágenes del cronograma)
+  const [programacionModal, setProgramacionModal] = useState(null); // { jornada, imagenes: [] }
+  const [programacionLoading, setProgramacionLoading] = useState(false);
+  const [programacionError, setProgramacionError] = useState('');
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -337,6 +342,58 @@ const Dashboard = ({ onLogout }) => {
     } catch (err) {
       setError('Error al eliminar la jornada. Intente nuevamente.');
       console.error(err);
+    }
+  };
+
+  // ─── Programación de Jornada (imágenes del cronograma) ───
+  const openProgramacionModal = async (jornada) => {
+    setProgramacionModal({ jornada, imagenes: jornada.programaciones || [] });
+    setProgramacionError('');
+  };
+
+  const closeProgramacionModal = () => {
+    setProgramacionModal(null);
+    setProgramacionError('');
+  };
+
+  const handleUploadProgramacion = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = ''; // permitir subir el mismo archivo de nuevo
+    if (!files.length || !programacionModal) return;
+
+    setProgramacionLoading(true);
+    setProgramacionError('');
+    try {
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('jornada', programacionModal.jornada.id);
+        fd.append('imagen', file);
+        fd.append('titulo', '');
+        await createProgramacion(fd);
+      }
+      const actualizadas = await getProgramaciones(programacionModal.jornada.id);
+      setProgramacionModal(prev => ({ ...prev, imagenes: actualizadas }));
+      fetchData(); // refrescar el contador de programaciones embebidas
+    } catch (err) {
+      setProgramacionError(err.message || 'Error al subir la programación.');
+    } finally {
+      setProgramacionLoading(false);
+    }
+  };
+
+  const handleDeleteProgramacion = async (id) => {
+    if (!window.confirm('¿Eliminar esta imagen de programación?')) return;
+    setProgramacionLoading(true);
+    setProgramacionError('');
+    try {
+      await deleteProgramacion(id);
+      const actualizadas = await getProgramaciones(programacionModal.jornada.id);
+      setProgramacionModal(prev => ({ ...prev, imagenes: actualizadas }));
+      fetchData();
+    } catch (err) {
+      setProgramacionError(err.message || 'Error al eliminar la programación.');
+    } finally {
+      setProgramacionLoading(false);
     }
   };
 
@@ -798,55 +855,70 @@ const Dashboard = ({ onLogout }) => {
 
                     return (
                       <div className="jornada-card" key={jornada.id}>
-                        <div
-                          className={`jornada-card-image-container ${!imageUrl ? 'jornada-card-image-placeholder' : ''}`}
-                          onClick={() => imageUrl && setLightboxImage({ url: imageUrl, title: jornada.nombre })}
-                          title={imageUrl ? "Haz clic para ver el afiche en tamaño completo" : ""}
+                        <button
+                          type="button"
+                          className="jornada-card-programacion-btn"
+                          onClick={() => openProgramacionModal(jornada)}
+                          title="Haz clic para ver la programación de esta jornada"
                         >
-                          {imageUrl ? (
-                            <>
-                              <img
-                                src={imageUrl}
-                                alt={jornada.nombre}
-                                className="jornada-card-image"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.parentElement.classList.add('jornada-card-image-placeholder');
-                                }}
-                              />
-                              <div className="jornada-image-zoom-badge">
-                                <span>🔍 Ampliar afiche</span>
-                              </div>
-                            </>
-                          ) : (
-                            <img src={logoUrl} alt="COMEZU" className="jornada-placeholder-logo" />
-                          )}
-                        </div>
+                          <div
+                            className={`jornada-card-image-container ${!imageUrl ? 'jornada-card-image-placeholder' : ''}`}
+                            onClick={(e) => {
+                              if (imageUrl) {
+                                e.stopPropagation();
+                                setLightboxImage({ url: imageUrl, title: jornada.nombre });
+                              }
+                            }}
+                            title={imageUrl ? "Haz clic para ver el afiche en tamaño completo" : ""}
+                          >
+                            {imageUrl ? (
+                              <>
+                                <img
+                                  src={imageUrl}
+                                  alt={jornada.nombre}
+                                  className="jornada-card-image"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.classList.add('jornada-card-image-placeholder');
+                                  }}
+                                />
+                                <div className="jornada-image-zoom-badge">
+                                  <span>🔍 Ampliar afiche</span>
+                                </div>
+                              </>
+                            ) : (
+                              <img src={logoUrl} alt="COMEZU" className="jornada-placeholder-logo" />
+                            )}
+                          </div>
 
-                        <div className="jornada-card-header">
-                          <h3>{jornada.nombre}</h3>
-                          <span className={`status-badge ${jornada.estado_jornada === 'A' ? 'active' : 'inactive'}`}>
-                            {jornada.estado_jornada === 'A' ? 'Activa' : 'Inactiva'}
-                          </span>
-                        </div>
-                        <div className="jornada-card-body">
-                          <div className="detail-item">
-                            <CalendarIcon />
-                            <span>
-                              {new Date(jornada.fecha_inicio + 'T00:00:00').toLocaleDateString()} - {new Date(jornada.fecha_final + 'T00:00:00').toLocaleDateString()}
+                          <div className="jornada-card-header">
+                            <h3>{jornada.nombre}</h3>
+                            <span className={`status-badge ${jornada.estado_jornada === 'A' ? 'active' : 'inactive'}`}>
+                              {jornada.estado_jornada === 'A' ? 'Activa' : 'Inactiva'}
                             </span>
                           </div>
-                          <div className="detail-item">
-                            <DollarIcon />
-                            <span className="price-tag">Costo: Bs. {parseFloat(jornada.costo).toFixed(2)}</span>
-                          </div>
-                          {jornada.uc && (
+                          <div className="jornada-card-body">
                             <div className="detail-item">
-                              <AwardIcon />
-                              <span>Valor de Crédito: {jornada.uc} UC</span>
+                              <CalendarIcon />
+                              <span>
+                                {new Date(jornada.fecha_inicio + 'T00:00:00').toLocaleDateString()} - {new Date(jornada.fecha_final + 'T00:00:00').toLocaleDateString()}
+                              </span>
                             </div>
-                          )}
-                        </div>
+                            <div className="detail-item">
+                              <DollarIcon />
+                              <span className="price-tag">Costo: Bs. {parseFloat(jornada.costo).toFixed(2)}</span>
+                            </div>
+                            {jornada.uc && (
+                              <div className="detail-item">
+                                <AwardIcon />
+                                <span>Valor de Crédito: {jornada.uc} UC</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="jornada-card-programacion-hint">
+                            📋 Ver Programación {(jornada.programaciones || []).length > 0 && `(${jornada.programaciones.length})`}
+                          </div>
+                        </button>
                         <div className="jornada-card-footer">
                           {inscrito ? (
                             <button className="btn-inscribed" disabled>
@@ -1833,6 +1905,75 @@ const Dashboard = ({ onLogout }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Programación de Jornada (imágenes del cronograma) */}
+      {programacionModal && (
+        <div className="lightbox-backdrop" onClick={closeProgramacionModal}>
+          <div className="programacion-modal animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close-btn" onClick={closeProgramacionModal} title="Cerrar programación">
+              &times;
+            </button>
+            <div className="programacion-modal-header">
+              <h2>📋 Programación — {programacionModal.jornada.nombre}</h2>
+            </div>
+
+            {programacionError && <div className="error-alert" style={{ margin: '0 20px 10px' }}>{programacionError}</div>}
+
+            <div className="programacion-modal-body">
+              {(user.rol === 'superadmin' || user.rol === 'staff') && (
+                <label className="programacion-upload-btn" style={{ opacity: programacionLoading ? 0.6 : 1 }}>
+                  {programacionLoading ? '⏳ Subiendo...' : '📤 Subir imágenes de programación'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleUploadProgramacion}
+                    style={{ display: 'none' }}
+                    disabled={programacionLoading}
+                  />
+                </label>
+              )}
+
+              {programacionModal.imagenes.length === 0 ? (
+                <p className="programacion-empty-msg">
+                  {user.rol === 'superadmin' || user.rol === 'staff'
+                    ? 'Aún no hay imágenes de programación. Usa el botón de arriba para subirlas.'
+                    : 'Aún no hay imágenes de programación disponibles para esta jornada.'}
+                </p>
+              ) : (
+                <div className="programacion-grid">
+                  {programacionModal.imagenes.map((prog) => {
+                    const progUrl = getImageUrl(prog.imagen);
+                    return (
+                      <div className="programacion-item" key={prog.id}>
+                        <img
+                          src={progUrl}
+                          alt={prog.titulo || `Programación ${prog.id}`}
+                          className="programacion-image"
+                          onClick={() => setLightboxImage({ url: progUrl, title: prog.titulo || `Programación — ${programacionModal.jornada.nombre}` })}
+                          title="Haz clic para ver en tamaño completo"
+                        />
+                        {(user.rol === 'superadmin' || user.rol === 'staff') && (
+                          <button
+                            type="button"
+                            className="programacion-delete-btn"
+                            onClick={() => handleDeleteProgramacion(prog.id)}
+                            disabled={programacionLoading}
+                            title="Eliminar esta imagen"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <span className="programacion-hint">Presiona ESC o haz clic afuera para cerrar</span>
+            </div>
           </div>
         </div>
       )}

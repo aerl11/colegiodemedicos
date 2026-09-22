@@ -353,6 +353,46 @@ export async function deleteJornada(id) {
   return true;
 }
 
+// ============================================================
+// ENDPOINTS PARA PROGRAMACIONES DE JORNADA (imágenes del cronograma)
+// ============================================================
+
+/**
+ * Obtener las programaciones de una jornada (o todas si no se pasa id).
+ */
+export async function getProgramaciones(jornadaId = null) {
+  const url = jornadaId ? `/jornada/programaciones/?jornada=${jornadaId}` : '/jornada/programaciones/';
+  const res = await apiFetch(url);
+  if (!res.ok) throw new Error('Error al obtener las programaciones.');
+  return res.json();
+}
+
+/**
+ * Crear una programación (subir imagen). programacionData debe ser FormData.
+ */
+export async function createProgramacion(programacionData) {
+  const res = await apiFetch('/jornada/programaciones/', {
+    method: 'POST',
+    body: programacionData instanceof FormData ? programacionData : JSON.stringify(programacionData),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Error al subir la programación.');
+  }
+  return res.json();
+}
+
+/**
+ * Eliminar una programación.
+ */
+export async function deleteProgramacion(id) {
+  const res = await apiFetch(`/jornada/programaciones/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Error al eliminar la programación.');
+  return true;
+}
+
 /**
  * Registrar un Pago (el backend también crea la Inscripción automáticamente via jornada_id).
  * @param {object} pagoData – { fecha_pago, monto, referencia_pago, usuario, jornada_id }

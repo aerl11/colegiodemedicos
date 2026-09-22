@@ -1,14 +1,26 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
-from .models import Jornada
+from .models import Jornada, ProgramacionJornada
+
+
+class ProgramacionJornadaInline(admin.TabularInline):
+    model = ProgramacionJornada
+    extra = 1
+    fields = ('titulo', 'imagen')
+
 
 @admin.register(Jornada)
 class JornadaAdmin(admin.ModelAdmin):
     search_fields = ['nombre']
-    list_display = ('nombre', 'costo', 'fecha_inicio', 'fecha_final', 'estado_jornada', 'preview_imagen')
+    list_display = ('nombre', 'costo', 'fecha_inicio', 'fecha_final', 'estado_jornada', 'preview_imagen', 'total_programaciones')
     list_filter = ('estado_jornada', 'fecha_inicio')
     readonly_fields = ('preview_imagen_detail', 'fecha_registro')
     fields = ('nombre', 'costo', 'fecha_inicio', 'fecha_final', 'uc', 'estado_jornada', 'imagen', 'preview_imagen_detail', 'fecha_registro')
+    inlines = [ProgramacionJornadaInline]
+
+    def total_programaciones(self, obj):
+        return obj.programaciones.count()
+    total_programaciones.short_description = "Programaciones"
 
     def preview_imagen(self, obj):
         if obj and getattr(obj, 'imagen', None):
@@ -35,3 +47,9 @@ class JornadaAdmin(admin.ModelAdmin):
                 pass
         return "No hay imagen cargada para esta jornada."
     preview_imagen_detail.short_description = "Vista previa de la imagen"
+
+@admin.register(ProgramacionJornada)
+class ProgramacionJornadaAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'jornada', 'fecha_subida')
+    list_filter = ('jornada',)
+    search_fields = ('titulo', 'jornada__nombre')

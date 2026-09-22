@@ -22,3 +22,24 @@ class Jornada(models.Model):
         return self.nombre
 
 
+class ProgramacionJornada(models.Model):
+    """Imágenes de programación (cronograma / agenda) de una jornada científica."""
+    jornada = models.ForeignKey(
+        Jornada,
+        on_delete=models.CASCADE,
+        related_name='programaciones',
+        verbose_name="Jornada"
+    )
+    titulo = models.CharField(max_length=200, blank=True, null=True, verbose_name="Título (opcional)")
+    imagen = models.ImageField(upload_to='jornadas/programaciones/', verbose_name="Imagen de programación")
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = "Programación de Jornada"
+        verbose_name_plural = "Programaciones de Jornada"
+
+    def __str__(self):
+        return self.titulo if self.titulo else f"Programación de {self.jornada.nombre}"
+
+
