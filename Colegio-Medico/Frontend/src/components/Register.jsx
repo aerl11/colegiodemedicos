@@ -593,7 +593,7 @@ const Register = ({ onBack }) => {
                         }}
                       >
                         {EMAIL_DOMAINS.map((d) => (
-                          <option key={d} value={d}>{d}</option>
+                          <option key={d} value={d}>@{d}</option>
                         ))}
                       </select>
                     </div>
