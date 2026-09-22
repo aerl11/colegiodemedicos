@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import logoUrl from '../assets/emblema.png';
 import { getJornadas, getInscripciones, createPago, logout, createJornada, updateJornada, deleteJornada, getPagos, getAccessToken, getUsers, createUser, updateUser, deleteUser, downloadReportePagosPdf, getProgramaciones, createProgramacion, deleteProgramacion } from '../services/api';
@@ -196,6 +196,58 @@ const Dashboard = ({ onLogout }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [programacionModal]);
+
+  // Estado de zoom del lightbox (escala y posición de paneo)
+  const [lightboxZoom, setLightboxZoom] = useState(1);
+  const [lightboxPos, setLightboxPos] = useState({ x: 0, y: 0 });
+  const isDraggingImage = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, px: 0, py: 0 });
+
+  const resetLightboxZoom = () => {
+    setLightboxZoom(1);
+    setLightboxPos({ x: 0, y: 0 });
+  };
+
+  const openLightbox = (payload) => {
+    setLightboxImage(payload);
+    resetLightboxZoom();
+  };
+
+  const clampLightboxPos = (zoom, pos) => {
+    // Limita el paneo para no perder la imagen de la vista
+    const limit = (zoom - 1) * 50; // porcentaje
+    return {
+      x: Math.max(-limit, Math.min(limit, pos.x)),
+      y: Math.max(-limit, Math.min(limit, pos.y)),
+    };
+  };
+
+  const handleLightboxWheel = (e) => {
+    e.preventDefault();
+    setLightboxZoom(prev => {
+      const next = Math.min(8, Math.max(1, prev + (e.deltaY < 0 ? 0.25 : -0.25)));
+      setLightboxPos(p => clampLightboxPos(next, p));
+      return next;
+    });
+  };
+
+  const handleLightboxMouseDown = (e) => {
+    if (lightboxZoom <= 1) return;
+    isDraggingImage.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, px: lightboxPos.x, py: lightboxPos.y };
+  };
+
+  const handleLightboxMouseMove = (e) => {
+    if (!isDraggingImage.current) return;
+    setLightboxPos(clampLightboxPos(lightboxZoom, {
+      x: dragStart.current.px + (e.clientX - dragStart.current.x),
+      y: dragStart.current.py + (e.clientY - dragStart.current.y),
+    }));
+  };
+
+  const handleLightboxMouseUp = () => {
+    isDraggingImage.current = false;
+  };
 
   // Estado para el modal de inscripción / pago
   const [selectedJornada, setSelectedJornada] = useState(null);
@@ -902,7 +954,7 @@ const Dashboard = ({ onLogout }) => {
                             onClick={(e) => {
                               if (imageUrl) {
                                 e.stopPropagation();
-                                setLightboxImage({ url: imageUrl, title: jornada.nombre });
+                                openLightbox({ url: imageUrl, title: jornada.nombre });
                               }
                             }}
                             title={imageUrl ? "Haz clic para ver el afiche en tamaño completo" : ""}
@@ -1172,7 +1224,7 @@ const Dashboard = ({ onLogout }) => {
                               {thumbUrl ? (
                                 <div
                                   className="jornada-table-thumb-container"
-                                  onClick={() => setLightboxImage({ url: thumbUrl, title: jornada.nombre })}
+                                  onClick={() => openLightbox({ url: thumbUrl, title: jornada.nombre })}
                                   title="Clic para ver afiche completo"
                                 >
                                   <img
@@ -1997,7 +2049,7 @@ const Dashboard = ({ onLogout }) => {
                             src={progUrl}
                             alt={prog.titulo || `Programación ${prog.id}`}
                             className="programacion-image"
-                            onClick={() => setLightboxImage({ url: progUrl, title: prog.titulo || `Programación — ${programacionModal.jornada.nombre}` })}
+                            onClick={() => openLightbox({ url: progUrl, title: prog.titulo || `Programación — ${programacionModal.jornada.nombre}` })}
                             title="Haz clic para ver en tamaño completo"
                           />
                           {(user.rol === 'superadmin' || user.rol === 'staff') && (
@@ -2067,20 +2119,69 @@ const Dashboard = ({ onLogout }) => {
         </div>
       )}
 
-      {/* Modal / Lightbox para ver afiche ampliado */}
+      {/* Modal / Lightbox para ver afiche ampliado (con zoom libre) */}
       {lightboxImage && (
-        <div className="lightbox-backdrop" onClick={() => setLightboxImage(null)}>
-          <div className="lightbox-modal animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button className="lightbox-close-btn" onClick={() => setLightboxImage(null)} title="Cerrar vista previa">
+        <div className="lightbox-backdrop" onClick={() => { setLightboxImage(null); resetLightboxZoom(); }}>
+          <div
+            className="lightbox-modal animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={handleLightboxWheel}
+            onMouseMove={handleLightboxMouseMove}
+            onMouseUp={handleLightboxMouseUp}
+            onMouseLeave={handleLightboxMouseUp}
+          >
+            <button className="lightbox-close-btn" onClick={() => { setLightboxImage(null); resetLightboxZoom(); }} title="Cerrar vista previa">
               &times;
             </button>
+
+            {/* Barra de controles de zoom */}
+            <div className="lightbox-zoom-controls">
+              <button
+                className="lightbox-zoom-btn"
+                onClick={() => setLightboxZoom(prev => { const n = Math.max(1, prev - 0.5); setLightboxPos(p => clampLightboxPos(n, p)); return n; })}
+                title="Alejar (-)"
+              >
+                −
+              </button>
+              <span className="lightbox-zoom-label">{Math.round(lightboxZoom * 100)}%</span>
+              <button
+                className="lightbox-zoom-btn"
+                onClick={() => setLightboxZoom(prev => Math.min(8, prev + 0.5))}
+                title="Acercar (+)"
+              >
+                +
+              </button>
+              <button
+                className="lightbox-zoom-btn lightbox-zoom-reset"
+                onClick={resetLightboxZoom}
+                title="Restablecer zoom (doble clic en la imagen)"
+                disabled={lightboxZoom === 1}
+              >
+                ⟲
+              </button>
+            </div>
+
             <div className="lightbox-image-wrapper">
-              <img src={lightboxImage.url} alt={lightboxImage.title || 'Afiche'} className="lightbox-image" />
+              <img
+                src={lightboxImage.url}
+                alt={lightboxImage.title || 'Afiche'}
+                className={`lightbox-image ${lightboxZoom > 1 ? 'is-zoomed' : ''}`}
+                style={{
+                  transform: `scale(${lightboxZoom}) translate(${lightboxPos.x}px, ${lightboxPos.y}px)`,
+                }}
+                onDoubleClick={resetLightboxZoom}
+                onMouseDown={handleLightboxMouseDown}
+                draggable={false}
+              />
             </div>
             {lightboxImage.title && (
               <div className="lightbox-caption">
                 <h3>{lightboxImage.title}</h3>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Presiona ESC o haz clic afuera para cerrar</span>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  {lightboxZoom > 1
+                    ? 'Rueda del mouse o +/− para zoom — arrastra para mover — doble clic restablece — ESC cierra'
+                    : 'Rueda del mouse para zoom — doble clic restablece — ESC o clic afuera cierran'}
+                </span>
               </div>
             )}
           </div>
