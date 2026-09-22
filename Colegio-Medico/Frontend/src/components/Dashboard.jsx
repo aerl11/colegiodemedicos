@@ -168,16 +168,34 @@ const Dashboard = ({ onLogout }) => {
   const [programacionModal, setProgramacionModal] = useState(null); // { jornada, imagenes: [] }
   const [programacionLoading, setProgramacionLoading] = useState(false);
   const [programacionError, setProgramacionError] = useState('');
+  const [programacionIndex, setProgramacionIndex] = useState(0);
+
+  // Auto-avance del carrusel cada 5 segundos
+  useEffect(() => {
+    if (!programacionModal || programacionModal.imagenes.length < 2) return;
+    const timer = setInterval(() => {
+      setProgramacionIndex(prev => (prev + 1) % programacionModal.imagenes.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [programacionModal]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setLightboxImage(null);
+        setProgramacionModal(null);
+      }
+      if (programacionModal && programacionModal.imagenes.length > 1) {
+        if (e.key === 'ArrowRight') {
+          setProgramacionIndex(prev => (prev + 1) % programacionModal.imagenes.length);
+        } else if (e.key === 'ArrowLeft') {
+          setProgramacionIndex(prev => (prev - 1 + programacionModal.imagenes.length) % programacionModal.imagenes.length);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [programacionModal]);
 
   // Estado para el modal de inscripción / pago
   const [selectedJornada, setSelectedJornada] = useState(null);
@@ -347,6 +365,7 @@ const Dashboard = ({ onLogout }) => {
 
   // ─── Programación de Jornada (imágenes del cronograma) ───
   const openProgramacionModal = async (jornada) => {
+    setProgramacionIndex(0); // el carrusel siempre arranca en la primera imagen
     setProgramacionModal({ jornada, imagenes: jornada.programaciones || [] });
     setProgramacionError('');
   };
@@ -1961,35 +1980,88 @@ const Dashboard = ({ onLogout }) => {
                     : 'Aún no hay imágenes de programación disponibles para esta jornada.'}
                 </p>
               ) : (
-                <div className="programacion-grid">
-                  {programacionModal.imagenes.map((prog) => {
-                    const progUrl = getImageUrl(prog.imagen);
-                    return (
-                      <div className="programacion-item" key={prog.id}>
-                        <img
-                          src={progUrl}
-                          alt={prog.titulo || `Programación ${prog.id}`}
-                          className="programacion-image"
-                          onClick={() => setLightboxImage({ url: progUrl, title: prog.titulo || `Programación — ${programacionModal.jornada.nombre}` })}
-                          title="Haz clic para ver en tamaño completo"
-                        />
-                        {(user.rol === 'superadmin' || user.rol === 'staff') && (
+                <div className="programacion-carrusel">
+                  {/* Track deslizante */}
+                  <div
+                    className="programacion-carrusel-track"
+                    style={{ transform: `translateX(-${programacionIndex * 100}%)` }}
+                  >
+                    {programacionModal.imagenes.map((prog, idx) => {
+                      const progUrl = getImageUrl(prog.imagen);
+                      return (
+                        <div
+                          className={`programacion-slide ${idx === programacionIndex ? 'is-active' : ''}`}
+                          key={prog.id}
+                        >
+                          <img
+                            src={progUrl}
+                            alt={prog.titulo || `Programación ${prog.id}`}
+                            className="programacion-image"
+                            onClick={() => setLightboxImage({ url: progUrl, title: prog.titulo || `Programación — ${programacionModal.jornada.nombre}` })}
+                            title="Haz clic para ver en tamaño completo"
+                          />
+                          {(user.rol === 'superadmin' || user.rol === 'staff') && (
+                            <button
+                              type="button"
+                              className="programacion-delete-btn"
+                              onClick={() => handleDeleteProgramacion(prog.id)}
+                              disabled={programacionLoading}
+                              title="Eliminar esta imagen"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Flechas de navegación */}
+                  {programacionModal.imagenes.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        className="programacion-flecha programacion-flecha-izq"
+                        onClick={() => setProgramacionIndex(prev => (prev - 1 + programacionModal.imagenes.length) % programacionModal.imagenes.length)}
+                        title="Anterior"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        className="programacion-flecha programacion-flecha-der"
+                        onClick={() => setProgramacionIndex(prev => (prev + 1) % programacionModal.imagenes.length)}
+                        title="Siguiente"
+                      >
+                        ›
+                      </button>
+
+                      {/* Contador de posición */}
+                      <div className="programacion-contador">
+                        {programacionIndex + 1} / {programacionModal.imagenes.length}
+                      </div>
+
+                      {/* Indicadores (puntos) */}
+                      <div className="programacion-dots">
+                        {programacionModal.imagenes.map((prog, idx) => (
                           <button
                             type="button"
-                            className="programacion-delete-btn"
-                            onClick={() => handleDeleteProgramacion(prog.id)}
-                            disabled={programacionLoading}
-                            title="Eliminar esta imagen"
-                          >
-                            🗑️
-                          </button>
-                        )}
+                            key={prog.id}
+                            className={`programacion-dot ${idx === programacionIndex ? 'is-active' : ''}`}
+                            onClick={() => setProgramacionIndex(idx)}
+                            title={`Ir a imagen ${idx + 1}`}
+                          />
+                        ))}
                       </div>
-                    );
-                  })}
+                    </>
+                  )}
                 </div>
               )}
-              <span className="programacion-hint">Presiona ESC o haz clic afuera para cerrar</span>
+              <span className="programacion-hint">
+                {programacionModal.imagenes.length > 1
+                  ? 'Usa las flechas o las teclas ← → para navegar — clic en la imagen para ampliar — ESC para cerrar'
+                  : 'Clic en la imagen para ampliar — ESC o clic afuera para cerrar'}
+              </span>
             </div>
           </div>
         </div>
