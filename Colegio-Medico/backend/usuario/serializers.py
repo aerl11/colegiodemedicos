@@ -305,6 +305,17 @@ class EmployeeCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Ya este número de COMEZU se encuentra registrado.")
         return value
 
+    def validate_telefono(self, value):
+        """Formato internacional: +<código país><número>. El número sin el código
+        debe tener entre 6 y 15 dígitos (estándar E.164)."""
+        if value:
+            import re
+            if not re.fullmatch(r'\+\d{7,18}', value):
+                raise serializers.ValidationError(
+                    "El teléfono debe tener formato +<código país><número>, con entre 6 y 15 dígitos sin contar el código."
+                )
+        return value
+
     def validate(self, attrs):
         tipo = attrs.get('tipo')
         if tipo == 'E':

@@ -3,6 +3,7 @@ import './shared.css';
 import './Register.css';
 import emblema from '../assets/emblema.png';
 import { register } from '../services/api';
+import { CODIGOS_PAIS, MAX_DIGITOS_TELEFONO } from '../services/codigosPais';
 
 const UserIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -187,6 +188,7 @@ const Register = ({ onBack }) => {
     genero: '', // 'M' o 'F'
     email: '',
     telefono: '',
+    codigoPais: '58',
     comezu: '',
     especialidad: '',
     sociedad: '',
@@ -197,8 +199,8 @@ const Register = ({ onBack }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // El teléfono solo acepta números (máximo 12 dígitos)
-    const finalValue = name === 'telefono' ? value.replace(/\D/g, '').slice(0, 12) : value;
+    // El teléfono solo acepta números (máximo 15 dígitos sin el código de país)
+    const finalValue = name === 'telefono' ? value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO) : value;
     setFormData((prev) => ({
       ...prev,
       [name]: finalValue
@@ -259,8 +261,8 @@ const Register = ({ onBack }) => {
       }
       if (!formData.telefono.trim()) {
         newErrors.telefono = 'El teléfono es requerido';
-      } else if (!/^\d{12}$/.test(formData.telefono.trim())) {
-        newErrors.telefono = 'El teléfono debe tener exactamente 12 dígitos numéricos';
+      } else if (!/^\d{6,15}$/.test(formData.telefono.trim())) {
+        newErrors.telefono = `El teléfono debe tener entre 6 y ${MAX_DIGITOS_TELEFONO} dígitos (sin contar el código de país)`;
       }
     } else if (step === 3) {
       if (!formData.username.trim()) newErrors.username = 'El nombre de usuario es requerido';
@@ -310,7 +312,7 @@ const Register = ({ onBack }) => {
       tipo: formData.tipo,
       nacionalidad: formData.nacionalidad,
       cedula: formData.cedula.trim(),
-      telefono: formData.telefono.trim(),
+      telefono: `+${formData.codigoPais}${formData.telefono.trim()}`,
       genero: formData.genero,
       comezu: formData.tipo === 'D' ? formData.comezu.trim() : null,
       especialidad: formData.tipo === 'D' ? formData.especialidad : null,
@@ -602,16 +604,30 @@ const Register = ({ onBack }) => {
 
                   <div className="form-group">
                     <label>Número de Contacto</label>
-                    <div className="input-with-icon">
+                    <div className="input-with-icon" style={{ display: 'flex', gap: '8px' }}>
                       <div className="input-icon"><PhoneIcon /></div>
+                      <select
+                        name="codigoPais"
+                        value={formData.codigoPais}
+                        onChange={handleChange}
+                        className="register-input"
+                        style={{ flex: '0 0 auto', width: 'auto', minWidth: '200px' }}
+                      >
+                        {CODIGOS_PAIS.map((c, i) => (
+                          <option key={`${c.codigo}-${c.pais}-${i}`} value={c.codigo}>
+                            +{c.codigo} {c.pais}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         type="text"
                         name="telefono"
-                        placeholder="Teléfono"
-                        maxLength={12}
+                        placeholder={`Número sin código (máx. ${MAX_DIGITOS_TELEFONO} dígitos)`}
+                        maxLength={MAX_DIGITOS_TELEFONO}
                         className={`register-input ${errors.telefono ? 'input-error' : ''}`}
                         value={formData.telefono}
                         onChange={handleChange}
+                        style={{ flex: 1 }}
                       />
                     </div>
                     {errors.telefono && <span className="field-error-text">{errors.telefono}</span>}

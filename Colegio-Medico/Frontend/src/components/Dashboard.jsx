@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import logoUrl from '../assets/emblema.png';
 import { getJornadas, getInscripciones, createPago, logout, createJornada, updateJornada, deleteJornada, getPagos, getAccessToken, getUsers, createUser, updateUser, deleteUser, downloadReportePagosPdf, getProgramaciones, createProgramacion, deleteProgramacion, BACKEND_URL } from '../services/api';
+import { CODIGOS_PAIS, MAX_DIGITOS_TELEFONO, separarTelefono } from '../services/codigosPais';
 
 /* ── Iconos ── */
 const LogOutIcon = () => (
@@ -498,7 +499,7 @@ const Dashboard = ({ onLogout }) => {
         tipo: selectedUser.tipo || 'D',
         nacionalidad: selectedUser.nacionalidad || 'V',
         cedula: selectedUser.cedula || '',
-        telefono: selectedUser.telefono || '',
+        ...(() => { const { codigo, numero } = separarTelefono(selectedUser.telefono); return { codigoPais: codigo, telefono: numero }; })(),
         comezu: selectedUser.comezu || '',
         especialidad: selectedUser.especialidad || '',
         sociedad: selectedUser.sociedad || '',
@@ -517,6 +518,7 @@ const Dashboard = ({ onLogout }) => {
         tipo: 'D',
         nacionalidad: 'V',
         cedula: '',
+        codigoPais: '58',
         telefono: '',
         comezu: '',
         especialidad: '',
@@ -537,9 +539,11 @@ const Dashboard = ({ onLogout }) => {
 
   const handleUserChange = (e) => {
     const { name, value, type, checked } = e.target;
+    // El teléfono del admin solo acepta números (máx. 15 dígitos sin código de país)
+    const finalValue = name === 'telefono' ? value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO) : value;
     setUserForm(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : finalValue
     }));
   };
 
@@ -562,7 +566,7 @@ const Dashboard = ({ onLogout }) => {
     setUserError('');
 
     // Prepare data
-    const payload = { ...userForm };
+    const payload = { ...userForm, telefono: `+${userForm.codigoPais}${userForm.telefono}` };
     if (editingUser && !payload.password) {
       delete payload.password; // Do not send empty password on edit
     }
@@ -1813,15 +1817,33 @@ const Dashboard = ({ onLogout }) => {
 
                 <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                   <label>Teléfono</label>
-                  <input
-                    type="text"
-                    name="telefono"
-                    value={userForm.telefono}
-                    onChange={handleUserChange}
-                    placeholder="Ej. 04141234567"
-                    className="register-input"
-                    disabled={userLoading}
-                  />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select
+                      name="codigoPais"
+                      value={userForm.codigoPais || '58'}
+                      onChange={handleUserChange}
+                      className="register-input"
+                      style={{ flex: '0 0 auto', width: 'auto', minWidth: '180px' }}
+                      disabled={userLoading}
+                    >
+                      {CODIGOS_PAIS.map((c, i) => (
+                        <option key={`${c.codigo}-${c.pais}-${i}`} value={c.codigo}>
+                          +{c.codigo} {c.pais}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      name="telefono"
+                      value={userForm.telefono}
+                      onChange={handleUserChange}
+                      placeholder={`Número sin código (máx. ${MAX_DIGITOS_TELEFONO})`}
+                      maxLength={MAX_DIGITOS_TELEFONO}
+                      className="register-input"
+                      style={{ flex: 1 }}
+                      disabled={userLoading}
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -69,6 +69,23 @@ class PerfilUsuarioInline(admin.StackedInline):
 class PersonalizadoUserAdmin(BaseUserAdmin):
     inlines = (PerfilUsuarioInline,)
 
+    # Acción: generar una nueva contraseña para el usuario seleccionado.
+    # NOTA: la contraseña original NO se puede ver (Django solo guarda el hash).
+    # Esta acción crea una nueva temporal y la muestra UNA sola vez al admin.
+    actions = ['generar_nueva_password']
+
+    def generar_nueva_password(self, request, queryset):
+        for user in queryset:
+            nueva = User.objects.make_random_password(length=10)
+            user.set_password(nueva)
+            user.save(update_fields=['password'])
+            self.message_user(
+                request,
+                f"Nueva contraseña de {user.username}: {nueva} — (cópiala ahora, no se volverá a mostrar)",
+                level='SUCCESS',
+            )
+    generar_nueva_password.short_description = "Generar nueva contraseña para los seleccionados"
+
     # CORRECCIÓN: Buscamos en los campos nativos de User y en la cédula del perfil relacionado
     search_fields = ('username', 'first_name', 'last_name', 'email', 'perfil__cedula')
 
