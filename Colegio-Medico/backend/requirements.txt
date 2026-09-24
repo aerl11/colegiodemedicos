@@ -21,3 +21,5 @@ xlsxwriter==3.2.9
 whitenoise
 psycopg2-binary
 dj-database-url
+django-cloudinary-storage
+cloudinary

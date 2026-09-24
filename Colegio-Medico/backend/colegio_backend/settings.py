@@ -57,6 +57,17 @@ INSTALLED_APPS = [
 
 ]
 
+# Almacenamiento de imágenes en Cloudinary (persistente, recomendado en Render).
+# Si CLOUDINARY_URL no está definido en el entorno, se usa el disco local (media/).
+if env('CLOUDINARY_URL', default=''):
+    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': env('CLOUDINARY_CLOUD_NAME', default=''),
+        'API_KEY': env('CLOUDINARY_API_KEY', default=''),
+        'API_SECRET': env('CLOUDINARY_API_SECRET', default=''),
+    }
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
