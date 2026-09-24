@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import logoUrl from '../assets/emblema.png';
-import { getJornadas, getInscripciones, createPago, logout, createJornada, updateJornada, deleteJornada, getPagos, getAccessToken, getUsers, createUser, updateUser, deleteUser, downloadReportePagosPdf, getProgramaciones, createProgramacion, deleteProgramacion } from '../services/api';
+import { getJornadas, getInscripciones, createPago, logout, createJornada, updateJornada, deleteJornada, getPagos, getAccessToken, getUsers, createUser, updateUser, deleteUser, downloadReportePagosPdf, getProgramaciones, createProgramacion, deleteProgramacion, BACKEND_URL } from '../services/api';
 
 /* ── Iconos ── */
 const LogOutIcon = () => (
@@ -131,7 +131,7 @@ const Dashboard = ({ onLogout }) => {
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    return `http://127.0.0.1:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return `${BACKEND_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
   };
 
   const [user, setUser] = useState({});
@@ -675,7 +675,7 @@ const Dashboard = ({ onLogout }) => {
 
   const handleDownloadCertificate = async (inscripcionId, userFullName) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/inscripcion/${inscripcionId}/certificado/`, {
+      const response = await fetch(`${BACKEND_URL}/api/inscripcion/${inscripcionId}/certificado/`, {
         headers: {
           'Authorization': `Bearer ${getAccessToken()}`
         }

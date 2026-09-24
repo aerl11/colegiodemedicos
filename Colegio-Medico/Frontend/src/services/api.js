@@ -7,6 +7,9 @@
 // VITE_API_URL en el archivo .env del frontend (ej: VITE_API_URL=https://mi-backend.onrender.com/api)
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://colegiodemedicos.onrender.com/api';
 
+// URL base del backend sin la ruta /api (para construir URLs de media: imágenes, etc.)
+export const BACKEND_URL = BASE_URL.replace(/\/api\/?$/, '');
+
 // ---------- Helpers de almacenamiento de tokens ----------
 
 export const getAccessToken  = () => localStorage.getItem('access_token');
