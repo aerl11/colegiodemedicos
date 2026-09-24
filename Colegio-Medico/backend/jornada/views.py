@@ -1,9 +1,10 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .serializers import JornadaSerializer, ProgramacionJornadaSerializer
-from .models import Jornada, ProgramacionJornada
+from .models import Jornada, ProgramacionJornada, ArchivoImagen
 
 # Create your views here.
 
@@ -27,3 +28,15 @@ class ProgramacionJornadaViewSet(viewsets.ModelViewSet):
         if jornada_id:
             queryset = queryset.filter(jornada_id=jornada_id)
         return queryset
+
+
+def servir_imagen(request, ruta):
+    """Sirve una imagen almacenada en la base de datos (Neon).
+    Ruta esperada: jornadas/<archivo.ext> o jornadas/programaciones/<archivo.ext>"""
+    try:
+        archivo = ArchivoImagen.objects.get(ruta=ruta)
+    except (ArchivoImagen.DoesNotExist, ValueError):
+        return HttpResponse(status=404)
+    resp = HttpResponse(archivo.contenido, content_type=archivo.content_type or 'image/png')
+    resp['Cache-Control'] = 'public, max-age=3600'
+    return resp

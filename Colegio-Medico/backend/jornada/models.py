@@ -1,4 +1,22 @@
 from django.db import models
+from .db_storage import DatabaseStorage
+
+
+class ArchivoImagen(models.Model):
+    """Tabla que guarda los bytes de las imágenes de jornadas/programaciones
+    directamente en la base de datos (bytea en Postgres/Neon)."""
+    ruta = models.CharField(max_length=500, unique=True, db_index=True)
+    contenido = models.BinaryField()
+    content_type = models.CharField(max_length=100, default='image/png')
+    tamano = models.IntegerField(default=0)
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Archivo de imagen"
+        verbose_name_plural = "Archivos de imagen"
+
+    def __str__(self):
+        return self.ruta
 
 # Create your models here.
 
@@ -15,7 +33,7 @@ class Jornada(models.Model):
     fecha_final = models.DateField()
     uc = models.CharField(max_length=20, null=True, blank=True)
     estado_jornada = models.CharField(max_length=2, choices=EstadoJornada.choices, default=EstadoJornada.ACTIVA)
-    imagen = models.ImageField(upload_to='jornadas/', null=True, blank=True, verbose_name="Imagen / Afiche de la Jornada")
+    imagen = models.ImageField(upload_to='jornadas/', storage=DatabaseStorage(), null=True, blank=True, verbose_name="Imagen / Afiche de la Jornada")
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -31,7 +49,7 @@ class ProgramacionJornada(models.Model):
         verbose_name="Jornada"
     )
     titulo = models.CharField(max_length=200, blank=True, null=True, verbose_name="Título (opcional)")
-    imagen = models.ImageField(upload_to='jornadas/programaciones/', verbose_name="Imagen de programación")
+    imagen = models.ImageField(upload_to='jornadas/programaciones/', storage=DatabaseStorage(), verbose_name="Imagen de programación")
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
