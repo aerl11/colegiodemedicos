@@ -363,3 +363,150 @@
   animation: spin 0.9s linear infinite;
 }
 
+/* ─────────────────────────────
+   Responsive — móvil y pantallas pequeñas
+   ───────────────────────────── */
+
+/* Tablets y móviles grandes (≤ 768px) */
+@media (max-width: 768px) {
+  .login-card {
+    padding: 32px 24px;
+    border-radius: 20px;
+  }
+
+  .login-heading {
+    font-size: 1.35rem;
+  }
+
+  .logo-section {
+    width: 110px;
+    height: 110px;
+  }
+
+  .login-title {
+    font-size: 24px;
+  }
+
+  .watermark-logo {
+    width: 120%;
+  }
+
+  .theme-toggle {
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Móviles (≤ 480px) */
+@media (max-width: 480px) {
+  .login-wrapper {
+    align-items: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .login-container {
+    max-width: 100%;
+    padding: 16px 14px;
+    margin: auto 0;
+  }
+
+  .login-card {
+    padding: 28px 18px;
+    border-radius: 18px;
+  }
+
+  .login-heading {
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+  }
+
+  .logo-section {
+    width: 92px;
+    height: 92px;
+    margin-bottom: 2px;
+  }
+
+  .login-title {
+    font-size: 21px;
+  }
+
+  .login-subtitle {
+    font-size: 8.5px;
+    text-align: center;
+    padding-right: 0;
+  }
+
+  .input-field input {
+    font-size: 16px; /* evita el zoom automático en iOS */
+    padding: 11px 14px 11px 44px;
+  }
+
+  .field-icon {
+    left: 14px;
+  }
+
+  .submit-btn {
+    padding: 12px;
+    font-size: 14.5px;
+  }
+
+  .form-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .card-divider {
+    margin: 18px 0 12px;
+  }
+
+  .watermark-logo {
+    width: 160%;
+  }
+}
+
+/* Móviles muy pequeños o en horizontal (altura ≤ 600px) */
+@media (max-height: 600px) {
+  .login-wrapper {
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .login-card {
+    padding: 20px 18px;
+  }
+
+  .logo-section {
+    width: 80px;
+    height: 80px;
+  }
+
+  .login-heading {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+  }
+}
+
+/* Pantallas grandes: la tarjeta respira más */
+@media (min-width: 1600px) {
+  .login-container {
+    max-width: 480px;
+  }
+
+  .login-card {
+    padding: 50px 46px;
+  }
+
+  .logo-section {
+    width: 155px;
+    height: 155px;
+  }
+
+  .login-heading {
+    font-size: 1.7rem;
+  }
+}
+
