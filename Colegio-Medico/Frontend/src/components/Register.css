@@ -335,47 +335,21 @@
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
-/* ---------- Selector de dominio de correo ---------- */
-.email-domain-select {
+/* ---------- Selector de código de país (compacto) ---------- */
+.register-input[name='codigoPais'] {
   appearance: none;
   -webkit-appearance: none;
-  height: 28px;
-  padding: 0 26px 0 10px;
-  border: 1.5px solid #c5a059;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-family: 'Montserrat', Arial, sans-serif;
-  font-weight: 600;
-  background-color: rgba(197, 160, 89, 0.1);
-  color: #8a6d2f;
-  cursor: pointer;
-  outline: none;
-  box-sizing: border-box;
-  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  padding-right: 26px;
   background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM4YTZkMmYiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 12px;
 }
 
-.email-domain-select:hover {
-  background-color: rgba(197, 160, 89, 0.2);
-  border-color: #a8843d;
-}
-
-.email-domain-select:focus {
-  border-color: #c5a059;
-  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.25);
-}
-
-[data-theme='dark'] .email-domain-select {
-  background-color: rgba(197, 160, 89, 0.15);
-  color: #d9b96c;
-  border-color: #c5a059;
-}
-
-[data-theme='dark'] .email-domain-select:hover {
-  background-color: rgba(197, 160, 89, 0.28);
+@media (max-width: 480px) {
+  .register-input[name='codigoPais'] {
+    width: 86px !important;
+  }
 }
 
 /* ---------- Grid ---------- */

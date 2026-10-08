@@ -161,21 +161,6 @@ const Register = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState({});
-  const [emailDomain, setEmailDomain] = useState('gmail.com');
-
-  const EMAIL_DOMAINS = [
-    'gmail.com',
-    'hotmail.com',
-    'yahoo.com',
-    'outlook.com',
-    'live.com',
-    'icloud.com',
-    'aol.com',
-    'protonmail.com',
-    'hotmail.es',
-    'yahoo.es',
-    'hotmail.co.uk'
-  ];
 
   const [formData, setFormData] = useState({
     tipo: '', // '' = Seleccionar opción, 'D' = Médico, 'E' = Estudiante
@@ -255,7 +240,7 @@ const Register = ({ onBack }) => {
       } else {
         const local = formData.email.split('@')[0];
         const domain = formData.email.split('@')[1];
-        if (!local || !domain || !EMAIL_DOMAINS.includes(domain)) {
+        if (!local || !domain || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
           newErrors.email = 'El correo no es válido';
         }
       }
@@ -566,38 +551,13 @@ const Register = ({ onBack }) => {
                     <div className="input-with-icon-wrapper">
                       <div className="input-icon"><MailIcon /></div>
                       <input
-                        type="text"
+                        type="email"
                         name="email"
                         placeholder="Correo electrónico"
                         className={`register-input ${errors.email ? 'input-error' : ''}`}
-                        value={formData.email ? formData.email.split('@')[0] : ''}
-                        onChange={(e) => {
-                          const local = e.target.value.replace(/@/g, '');
-                          handleChange({ target: { name: 'email', value: local ? `${local}@${emailDomain}` : '' } });
-                        }}
-                        style={{ paddingRight: '170px' }}
+                        value={formData.email}
+                        onChange={handleChange}
                       />
-                      <select
-                        value={emailDomain}
-                        onChange={(e) => {
-                          const domain = e.target.value;
-                          setEmailDomain(domain);
-                          const local = formData.email ? formData.email.split('@')[0] : '';
-                          handleChange({ target: { name: 'email', value: local ? `${local}@${domain}` : '' } });
-                        }}
-                        className="email-domain-select"
-                        style={{
-                          position: 'absolute',
-                          right: '8px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          width: '150px'
-                        }}
-                      >
-                        {EMAIL_DOMAINS.map((d) => (
-                          <option key={d} value={d}>@{d}</option>
-                        ))}
-                      </select>
                     </div>
                     {errors.email && <span className="field-error-text">{errors.email}</span>}
                   </div>
@@ -611,11 +571,11 @@ const Register = ({ onBack }) => {
                         value={formData.codigoPais}
                         onChange={handleChange}
                         className="register-input"
-                        style={{ flex: '0 0 auto', width: 'auto', minWidth: '200px' }}
+                        style={{ flex: '0 0 auto', width: '110px', paddingRight: '28px' }}
                       >
                         {CODIGOS_PAIS.map((c, i) => (
                           <option key={`${c.codigo}-${c.pais}-${i}`} value={c.codigo}>
-                            +{c.codigo} {c.pais}
+                            +{c.codigo}
                           </option>
                         ))}
                       </select>
