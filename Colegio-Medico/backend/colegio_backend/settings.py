@@ -213,7 +213,12 @@ DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
 
 #GMAIL
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Envío real por SMTP de Gmail (el backend de consola solo imprimía los correos en el log).
+# Para desactivar el envío en pruebas locales, define EMAIL_CONSOLE=True en el .env.
+if env.bool('EMAIL_CONSOLE', default=False):
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
