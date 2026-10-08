@@ -60,6 +60,7 @@ const Login = ({ onRegister, onForgot, onLoginSuccess }) => {
 
       <div className="login-container">
         <div className="login-card animate-fade-in">
+          <h1 className="login-heading">Inscripciones</h1>
           <div className="logo-section">
             <img src={logoUrl} alt="COMEZU Logo" className="main-logo" />
           </div>
