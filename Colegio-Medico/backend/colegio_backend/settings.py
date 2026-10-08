@@ -104,6 +104,14 @@ WSGI_APPLICATION = 'colegio_backend.wsgi.application'
 ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
 
+# Orígenes confiables para la verificación CSRF (necesario para el panel /admin/)
+# Incluye aquí todos los dominios/puertos desde los que se accede al panel de administración.
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://colegiodemedicos.onrender.com',
+] + [o.strip() for o in env('CSRF_TRUSTED_ORIGINS', default='').split(',') if o.strip()]
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
