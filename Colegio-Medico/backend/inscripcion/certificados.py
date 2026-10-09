@@ -146,8 +146,8 @@ def generar_certificado_pdf(inscripcion):
     pdf.drawImage(lector, 0, 0, width=ancho_pag, height=alto_pag, mask='auto')
 
     # Nombre del participante en la zona vacía central (43.5% - 50.5% de la altura)
-    tamano_fuente = max(22, int(ancho_pag * 0.018))
-    y_nombre = int(alto_pag * 0.455)
+    tamano_fuente = max(30, int(alto_pag * 0.055))
+    y_nombre = int(alto_pag * 0.495)
     pdf.setFillColorRGB(0x1F / 255, 0x3D / 255, 0x64 / 255)  # azul oscuro del diseño
     pdf.setFont('Helvetica-Bold', tamano_fuente)
     pdf.drawCentredString(ancho_pag / 2, y_nombre, nombre_titulado)
