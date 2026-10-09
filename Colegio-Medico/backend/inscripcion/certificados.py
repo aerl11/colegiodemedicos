@@ -7,6 +7,9 @@ from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from PIL import Image as PILImage
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
 from .models import Inscripcion
 
@@ -100,6 +103,61 @@ def generar_certificado_pptx(inscripcion):
     return archivo
 
 
+def generar_certificado_pdf(inscripcion):
+    """
+    Genera el certificado como PDF en memoria, usando la misma imagen de fondo
+    de la plantilla de PowerPoint y colocando el nombre del participante en la
+    zona vacía central. Devuelve un BytesIO listo para descargarse o adjuntarse.
+    Lanza ValueError si no se puede preparar el PDF.
+    """
+    usuario = inscripcion.usuario
+    nombre_titulado = _construir_nombre_titulado(usuario)
+
+    ruta_bg = os.path.join(settings.BASE_DIR, 'static', 'templates', '_bg_cert.png')
+    if not os.path.exists(ruta_bg):
+        # Fallback: extraer la imagen de fondo desde la plantilla pptx.
+        ruta_plantilla = os.path.join(settings.BASE_DIR, 'static', 'templates', 'plantilla_certificado.pptx')
+        if not os.path.exists(ruta_plantilla):
+            raise ValueError(f"No se encontró la plantilla en {ruta_plantilla}")
+        prs = Presentation(ruta_plantilla)
+        extraida = False
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                if shape.shape_type == 13:  # Picture
+                    shape.image.save(ruta_bg)
+                    extraida = True
+                    break
+            if extraida:
+                break
+        if not extraida:
+            raise ValueError("La plantilla no contiene una imagen de fondo extraíble")
+
+    try:
+        bg = PILImage.open(ruta_bg)
+        ancho_pag, alto_pag = bg.size
+        lector = ImageReader(ruta_bg)
+    except Exception as e:
+        raise ValueError(f"No se pudo cargar la imagen de fondo del certificado: {e}")
+
+    archivo = BytesIO()
+    pdf = canvas.Canvas(archivo, pagesize=(ancho_pag, alto_pag))
+
+    # Imagen de fondo a página completa
+    pdf.drawImage(lector, 0, 0, width=ancho_pag, height=alto_pag, mask='auto')
+
+    # Nombre del participante en la zona vacía central (43.5% - 50.5% de la altura)
+    tamano_fuente = max(22, int(ancho_pag * 0.018))
+    y_nombre = int(alto_pag * 0.455)
+    pdf.setFillColorRGB(0x1F / 255, 0x3D / 255, 0x64 / 255)  # azul oscuro del diseño
+    pdf.setFont('Helvetica-Bold', tamano_fuente)
+    pdf.drawCentredString(ancho_pag / 2, y_nombre, nombre_titulado)
+
+    pdf.setTitle(f'Certificado de participación - {inscripcion.jornada.nombre}')
+    pdf.save()
+    archivo.seek(0)
+    return archivo
+
+
 def nombre_archivo_certificado(inscripcion):
     usuario = inscripcion.usuario
-    return f"Certificado_{usuario.first_name}_{usuario.last_name}.pptx"
+    return f"Certificado_{usuario.first_name}_{usuario.last_name}.pdf"

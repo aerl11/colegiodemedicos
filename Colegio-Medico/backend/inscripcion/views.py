@@ -9,7 +9,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import Inscripcion
 from .serializers import InscripcionSerializer
-from .certificados import generar_certificado_pptx, nombre_archivo_certificado
+from .certificados import generar_certificado_pdf, nombre_archivo_certificado
 from jornada.models import Jornada
 from usuario.permissions import HasRole
 from rest_framework.authentication import SessionAuthentication
@@ -65,14 +65,14 @@ class InscripcionViewSet(viewsets.ModelViewSet):
 
         # Generar el certificado reutilizando la lógica central (la misma que usa el envío por correo)
         try:
-            archivo = generar_certificado_pptx(inscripcion)
+            archivo = generar_certificado_pdf(inscripcion)
         except ValueError as e:
             return HttpResponse(f"Error: {e}", status=404)
 
         # Configurar la respuesta para la descarga del archivo
         response = HttpResponse(
             archivo.read(),
-            content_type='application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            content_type='application/pdf'
         )
         response['Content-Disposition'] = f'attachment; filename="{nombre_archivo_certificado(inscripcion)}"'
         return response

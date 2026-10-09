@@ -698,7 +698,7 @@ const Dashboard = ({ onLogout }) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Certificado_${userFullName.replace(/\s+/g, '_')}.pptx`;
+      a.download = `Certificado_${userFullName.replace(/\s+/g, '_')}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();

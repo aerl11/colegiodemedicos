@@ -1,7 +1,7 @@
 from django.core.mail import EmailMessage
 from django.conf import settings
 
-from .certificados import generar_certificado_pptx, nombre_archivo_certificado
+from .certificados import generar_certificado_pdf, nombre_archivo_certificado
 
 
 def enviar_certificado_email(inscripcion):
@@ -17,7 +17,7 @@ def enviar_certificado_email(inscripcion):
         return False
 
     try:
-        archivo = generar_certificado_pptx(inscripcion)
+        archivo = generar_certificado_pdf(inscripcion)
     except ValueError as e:
         print(f"[Certificados] {e}")
         return False
@@ -52,7 +52,7 @@ def enviar_certificado_email(inscripcion):
                 <p style="margin: 5px 0;"><strong>Unidades de crédito:</strong> {jornada.uc or '—'}</p>
             </div>
 
-            <p>El certificado en formato <strong>.pptx</strong> va adjunto a este correo. También puede
+            <p>El certificado en formato <strong>PDF</strong> va adjunto a este correo. También puede
             descargarlo en cualquier momento desde su panel de inscripciones en la plataforma.</p>
 
             <p>Gracias por su participación. ¡Esperamos contar con usted en próximas jornadas!</p>
@@ -74,7 +74,7 @@ def enviar_certificado_email(inscripcion):
     correo.attach(
         nombre_archivo_certificado(inscripcion),
         archivo.read(),
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        'application/pdf'
     )
     try:
         correo.send(fail_silently=False)
