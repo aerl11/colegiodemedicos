@@ -1,0 +1,23 @@
+OLD slide size EMU: 50406300 13373100  slides: 1
+slide 0 shape 0 type FREEFORM (5) name 'Freeform 2' L 16566356 T 0 W 17273588 H 13373100 text ''
+slide 0 shape 1 type GROUP (6) name 'Group 3' L 17380887 T 929719 W 15644526 H 11513661 text False
+slide 0 shape 2 type GROUP (6) name 'Group 6' L 17779932 T 1236073 W 14846436 H 10900954 text False
+slide 0 shape 3 type GROUP (6) name 'Group 9' L 17922893 T 1356717 W 1682291 H 1572716 text False
+slide 0 shape 4 type FREEFORM (5) name 'Freeform 11' L 29894253 T 1492373 W 1301403 H 1301403 text ''
+slide 0 shape 5 type FREEFORM (5) name 'Freeform 12' L 31284180 T 1533847 W 1218454 H 1218454 text ''
+slide 0 shape 6 type AUTO_SHAPE (1) name 'AutoShape 13' L 19738011 T 7152388 W 11143496 H 0 text ''
+slide 0 shape 7 type FREEFORM (5) name 'Freeform 14' L 18900610 T 3353663 W 1515742 H 2793426 text ''
+slide 0 shape 8 type TEXT_BOX (17) name 'TextBox 15' L 20416352 T 1651153 W 9573596 H 1024599 text 'Federación Médica Venezolana\nColegio de Médicos del Estado Zulia\nInstituto de Estudios Médicos “Dr. Marco Tulio Torres Vera”'
+slide 0 shape 9 type TEXT_BOX (17) name 'TextBox 16' L 20148081 T 3425107 W 10110138 H 1372490 text 'JORNADAS MÉDICO CIENTÍFICAS “DÍA NACIONAL DEL MÉDICO 2026”'
+slide 0 shape 10 type TEXT_BOX (17) name 'TextBox 17' L 19917822 T 5038855 W 10570655 H 518517 text '“LIDERANDO EL CAMBIO EN LA MEDICINA ACTUAL”'
+slide 0 shape 11 type AUTO_SHAPE (1) name 'AutoShape 18' L 28156183 T 10711907 W 2485096 H 8331 text ''
+slide 0 shape 12 type FREEFORM (5) name 'Freeform 19' L 28320916 T 10150249 W 2155629 H 600649 text ''
+slide 0 shape 13 type TEXT_BOX (17) name 'TextBox 20' L 27982120 T 10753183 W 2905060 H 292048 text 'Dra. Nuris Gonzàlez'
+slide 0 shape 14 type TEXT_BOX (17) name 'TextBox 21' L 28248963 T 11016655 W 2299535 H 292048 text 'Presidente del IEM'
+slide 0 shape 15 type TEXT_BOX (17) name 'TextBox 22' L 17982334 T 11664658 W 4466297 H 221733 text 'Maracaibo 04 al 09 de Marzo de 2026'
+slide 0 shape 16 type FREEFORM (5) name 'Freeform 23' L 19381773 T 1533847 W 948462 H 1218454 text ''
+slide 0 shape 17 type FREEFORM (5) name 'Freeform 24' L 19385985 T 1575322 W 948462 H 1218454 text ''
+slide 0 shape 18 type GROUP (6) name 'Group 25' L 19519121 T 10024425 W 7020120 H 1284278 text False
+slide 0 shape 19 type FREEFORM (5) name 'Freeform 36' L 28320916 T 10141591 W 2155629 H 600649 text ''
+slide 0 shape 20 type TEXT_BOX (17) name 'TextBox 37' L 18958242 T 7305734 W 12489817 H 2244315 text 'Por su participación en [NOMBRE_JORNADA]                       realizadas en el Colegio de Médicos del Estado Zulia, del [FECHA_INICIO] al [FECHA_FINAL]en la ciudad de Maracaibo, Edo. Zulia, contribuy'
+slide 0 shape 21 type TEXT_BOX (17) name 'TextBox 38' L 17779932 T 6506320 W 14846436 H 584014 text '[NOMBRE_DOCTOR]'

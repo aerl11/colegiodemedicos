@@ -4,6 +4,9 @@ from io import BytesIO
 
 from django.conf import settings
 from pptx import Presentation
+from pptx.util import Inches, Pt, Emu
+from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from .models import Inscripcion
 
@@ -67,38 +70,29 @@ def generar_certificado_pptx(inscripcion):
 
     prs = Presentation(ruta_plantilla)
 
-    etiquetas = ['[NOMBRE_DOCTOR]', '[NOMBRE_JORNADA]', '[UC]', '[FECHA_INICIO]', '[FECHA_FINAL]', '[ROL]', '[SOCIEDAD]']
-
-    def procesar_reemplazo(shape):
-        if not shape.has_text_frame:
-            return
-
-        for paragraph in shape.text_frame.paragraphs:
-            p_text = paragraph.text
-            if any(tag in p_text for tag in etiquetas):
-                p_text = p_text.replace('[NOMBRE_DOCTOR]', nombre_titulado)
-                p_text = p_text.replace('[NOMBRE_JORNADA]', jornada.nombre)
-                p_text = p_text.replace('[UC]', str(jornada.uc))
-                p_text = p_text.replace('[FECHA_INICIO]', fecha_inicio_formateada)
-                p_text = p_text.replace('[FECHA_FINAL]', fecha_final_formateada)
-                p_text = p_text.replace('[ROL]', "")
-                p_text = p_text.replace('[SOCIEDAD]', sociedad_certificado)
-
-                # Blindaje: vaciamos los runs fragmentados y consolidamos el nuevo texto
-                if paragraph.runs:
-                    paragraph.runs[0].text = p_text
-                    for run in paragraph.runs[1:]:
-                        run.text = ""
-                else:
-                    paragraph.text = p_text
-
+    # La nueva plantilla es una imagen de fondo a pantalla completa, sin campos
+    # de texto. Insertamos el nombre del participante como un cuadro de texto
+    # sobre la zona vacía central de la imagen.
     for slide in prs.slides:
-        for shape in slide.shapes:
-            procesar_reemplazo(shape)
-            if shape.has_table:
-                for row in shape.table.rows:
-                    for cell in row.cells:
-                        procesar_reemplazo(cell)
+        ancho = slide.shapes[-1].left + slide.shapes[-1].width if slide.shapes else prs.slide_width
+        # Zona vacía de la plantilla: entre 43.5% y 50.5% de la altura.
+        alto = prs.slide_height
+        nombre_box = slide.shapes.add_textbox(
+            Emu(int(prs.slide_width * 0.08)),
+            Emu(int(alto * 0.435)),
+            Emu(int(prs.slide_width * 0.84)),
+            Emu(int(alto * 0.07)),
+        )
+        tf = nombre_box.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = nombre_titulado
+        run.font.size = Pt(28)
+        run.font.bold = True
+        run.font.name = 'Calibri'
+        run.font.color.rgb = RGBColor(0x1F, 0x3D, 0x64)  # azul oscuro del diseño
 
     archivo = BytesIO()
     prs.save(archivo)

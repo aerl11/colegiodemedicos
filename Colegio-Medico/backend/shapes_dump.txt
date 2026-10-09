@@ -1,0 +1,2 @@
+slide size EMU: 9144000 6858000  slides: 1
+slide 0 shape 0 type PICTURE (13) name 'Imagen 3' L 0 T 0 W 9144000 H 6858000 text False
