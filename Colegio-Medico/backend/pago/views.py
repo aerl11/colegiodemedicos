@@ -17,10 +17,13 @@ class PagoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user or not user.is_authenticated:
             return Pago.objects.none()
+        base = Pago.objects.select_related(
+            'usuario', 'usuario__perfil', 'inscripcion', 'inscripcion__jornada',
+        ).prefetch_related('usuario__groups').order_by('-fecha_pago', '-id')
         user_roles = set(user.groups.values_list("name", flat=True))
         if user.is_superuser or "superadmin" in user_roles or "staff" in user_roles:
-            return Pago.objects.all().select_related('usuario', 'usuario__perfil', 'inscripcion', 'inscripcion__jornada').order_by('-fecha_pago', '-id')
-        return Pago.objects.filter(usuario=user).select_related('usuario', 'usuario__perfil', 'inscripcion', 'inscripcion__jornada').order_by('-fecha_pago', '-id')
+            return base
+        return base.filter(usuario=user)
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)

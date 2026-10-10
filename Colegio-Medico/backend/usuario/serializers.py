@@ -203,10 +203,12 @@ def get_user_role(user) -> str:
     if getattr(user, "is_superuser", False):
         return "superadmin"
     try:
-        groups_qs = user.groups.all().order_by("name")
-        first_group = groups_qs.first()
-        if first_group:
-            return first_group.name
+        # IMPORTANTE: no usar .order_by("name").first() aquí, porque fuerza una
+        # consulta nueva por cada usuario (N+1) y anula el prefetch_related.
+        # Ordenamos en Python para aprovechar el caché del prefetch_related.
+        grupos = list(user.groups.all())
+        if grupos:
+            return min(grupos, key=lambda g: g.name).name
     except Exception:
         pass
     if getattr(user, "is_staff", False):
@@ -246,6 +248,11 @@ class UserListSerializer(serializers.ModelSerializer):
 
     def get_rol(self, obj):
         return get_user_role(obj)
+
+    @classmethod
+    def optimizar_queryset(cls, queryset):
+        """Queryset con prefetchs para listar usuarios sin N+1 queries."""
+        return queryset.select_related('perfil').prefetch_related('groups')
 
 
 class EmployeeCreateUpdateSerializer(serializers.ModelSerializer):

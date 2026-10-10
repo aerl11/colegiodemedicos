@@ -35,10 +35,16 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             return Inscripcion.objects.none()
         # Si es superadmin o tiene rol staff/superadmin, ve todas
         user_roles = set(user.groups.values_list("name", flat=True))
+        # Prefetch completo: el serializer anidado (usuario_data, pago_data -> usuario_data)
+        # necesita usuario+perfil+groups tanto de la inscripción como del pago vinculado
+        base = Inscripcion.objects.select_related(
+            'usuario', 'pago', 'jornada',
+            'usuario__perfil', 'pago__usuario', 'pago__usuario__perfil',
+        ).prefetch_related('usuario__groups', 'pago__usuario__groups')
         if user.is_superuser or "superadmin" in user_roles or "staff" in user_roles:
-            return Inscripcion.objects.all()
+            return base
         # Si es participante, solo ve las suyas
-        return Inscripcion.objects.filter(usuario=user)
+        return base.filter(usuario=user)
 
     @action(detail=True, methods=['get'])
     def certificado(self, request, pk=None):

@@ -9,7 +9,7 @@ from .models import Jornada, ProgramacionJornada, ArchivoImagen
 # Create your views here.
 
 class JornadaViewSet(viewsets.ModelViewSet):
-    queryset = Jornada.objects.all().order_by('-fecha_inicio')
+    queryset = Jornada.objects.prefetch_related('programaciones').order_by('-fecha_inicio')
     serializer_class = JornadaSerializer
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 

@@ -12,6 +12,12 @@ class JornadaSerializer(serializers.ModelSerializer):
     imagen = serializers.ImageField(required=False, allow_null=True)
     programaciones = ProgramacionJornadaSerializer(many=True, read_only=True)
 
+    def __init__(self, *args, incluir_programaciones=True, **kwargs):
+        # Permite omitir 'programaciones' en listados grandes (evita N+1 queries)
+        super().__init__(*args, **kwargs)
+        if not incluir_programaciones:
+            self.fields.pop('programaciones', None)
+
     class Meta:
         model = Jornada
         fields = ['id', 'nombre', 'costo', 'fecha_inicio', 'fecha_final', 'uc', 'estado_jornada', 'imagen', 'programaciones', 'fecha_registro']

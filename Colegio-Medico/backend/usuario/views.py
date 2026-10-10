@@ -19,13 +19,16 @@ from jornada.models import Jornada
 from inscripcion.models import Inscripcion
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
-from .serializers import LoginSerializer, get_user_role, UserListSerializer, EmployeeCreateUpdateSerializer
+from .serializers import (
+    LoginSerializer, get_user_role, UserListSerializer, EmployeeCreateUpdateSerializer
+)
 from .permissions import HasRole
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class EmpleadoViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     required_roles = ["superadmin", "staff","participante"]
-    queryset = User.objects.all()
+    queryset = User.objects.select_related('perfil').prefetch_related('groups')
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:

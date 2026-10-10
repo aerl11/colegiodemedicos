@@ -615,21 +615,22 @@ const Dashboard = ({ onLogout }) => {
     setLoading(true);
     setError('');
     try {
-      const dataJornadas = await getJornadas();
-      const dataInscripciones = await getInscripciones();
-      const dataPagos = await getPagos();
+      const userDataRaw = localStorage.getItem('user_data');
+      const parsedUser = userDataRaw ? JSON.parse(userDataRaw) : null;
+      const esAdmin = parsedUser && (parsedUser.rol === 'superadmin' || parsedUser.rol === 'staff');
+
+      // Cargamos todo en paralelo (los admin piden además la lista de usuarios)
+      const [dataJornadas, dataInscripciones, dataPagos, dataUsers] = await Promise.all([
+        getJornadas(),
+        getInscripciones(),
+        getPagos(),
+        esAdmin ? getUsers() : Promise.resolve(null),
+      ]);
+
       setJornadas(dataJornadas);
       setInscripciones(dataInscripciones);
       setPagos(dataPagos);
-
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        if (parsedUser.rol === 'superadmin' || parsedUser.rol === 'staff') {
-          const dataUsers = await getUsers();
-          setUsers(dataUsers);
-        }
-      }
+      if (dataUsers) setUsers(dataUsers);
     } catch (err) {
       setError('Error al cargar la información. Por favor, intente de nuevo.');
       console.error(err);
