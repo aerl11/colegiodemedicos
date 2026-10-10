@@ -209,6 +209,55 @@ export function logout() {
 }
 
 // ============================================================
+//  RECUPERACIÓN DE CONTRASEÑA (código por correo)
+// ============================================================
+
+/**
+ * Paso 1: Solicitar el código de recuperación. Envía un correo con un
+ * código de 6 dígitos al usuario registrado con ese email.
+ * @param {string} email
+ */
+export async function requestPasswordReset(email) {
+  const res = await fetch(`${BASE_URL}/usuario/password-reset/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const msg = data?.email?.[0] || data?.detail || 'Error al enviar el código de recuperación.';
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+/**
+ * Paso 2: Validar el código y restablecer la contraseña.
+ * El backend envía un correo confirmando el cambio exitoso.
+ * @param {string} token – código de 6 dígitos recibido por correo
+ * @param {string} password – nueva contraseña
+ */
+export async function confirmPasswordReset(token, password) {
+  const res = await fetch(`${BASE_URL}/usuario/password-reset/confirm/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    // Errores comunes: token inválido/expirado o contraseña no válida
+    const msg =
+      (data.token && data.token[0]) ||
+      (data.password && data.password[0]) ||
+      (typeof data.status === 'string' && data.status) ||
+      data?.detail ||
+      'Código inválido o contraseña no permitida. Verifica e intenta de nuevo.';
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+// ============================================================
 //  ENDPOINTS PROTEGIDOS (ejemplos para uso futuro)
 // ============================================================
 

@@ -21,7 +21,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User  # CORRECCIÓN: Importamos el User nativo de Django
 from .utils import enviar_confirmacion_registro
-from django_rest_passwordreset.signals import reset_password_token_created
+from django_rest_passwordreset.signals import reset_password_token_created, post_password_reset
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -140,6 +140,78 @@ Si usted no solicitó este cambio, por favor ignore este correo electrónico.
         recipient_list=[context['email']],
         fail_silently=False,
         html_message=html_message
+    )
+
+
+@receiver(post_password_reset)
+def password_reset_exitoso(sender, user, reset_password_token, *args, **kwargs):
+    """Envía un correo al usuario cuando su contraseña fue restablecida exitosamente."""
+    context = {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+    }
+
+    text_message = f"""
+Estimado(a) {context['first_name']} {context['last_name']},
+
+Su contraseña fue restablecida exitosamente en la plataforma del Colegio de Médicos del Estado Zulia.
+
+Ya puede iniciar sesión con su nueva contraseña.
+
+Si usted no realizó este cambio, por favor contacte de inmediato al soporte del Colegio.
+"""
+
+    html_message = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+
+        <div style="background-color: #0f172a; padding: 25px; text-align: center; border-bottom: 4px solid #1d4ed8;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;">
+                COLEGIO DE MÉDICOS DEL ESTADO ZULIA
+            </h2>
+            <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 12px; font-weight: 500; letter-spacing: 1px;">
+                SISTEMA DE GESTIÓN DE JORNADAS Científicas
+            </p>
+        </div>
+
+        <div style="padding: 30px; background-color: #ffffff;">
+            <p style="font-size: 16px; margin: 0 0 16px 0; color: #334155;">
+                Estimado(a) <strong>Dr(a). {context['first_name']} {context['last_name']}</strong>,
+            </p>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 24px 0;">
+                Su contraseña fue restablecida <strong>exitosamente</strong>. Ya puede iniciar sesión en la plataforma con su nueva contraseña.
+            </p>
+
+            <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 15px; font-weight: 700; color: #047857;">
+                    ✅ Contraseña recuperada con éxito
+                </p>
+            </div>
+
+            <p style="font-size: 13px; line-height: 1.5; color: #64748b; margin: 0;">
+                Si usted no realizó este cambio, su cuenta podría estar comprometida. Por favor contacte de inmediato al soporte del Colegio de Médicos.
+            </p>
+        </div>
+
+        <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                Este es un correo automatizado generado por el sistema. Por favor no responda a esta dirección.
+            </p>
+            <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8; font-weight: 600;">
+                COMEZU &copy; 2026
+            </p>
+        </div>
+    </div>
+    """
+
+    send_mail(
+        subject="Contraseña restablecida exitosamente - COMEZU",
+        message=text_message,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[context['email']],
+        fail_silently=False,
+        html_message=html_message,
     )
 
 
