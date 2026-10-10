@@ -15,6 +15,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User  # CORRECCIÓN OBLIGATORIA: Usamos el User nativo de Django
+from jornada.db_storage import DatabaseStorage
 
 class Pago(models.Model):
     TIPO_PAGO_CHOICES = [
@@ -27,9 +28,18 @@ class Pago(models.Model):
     monto = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=False)
     referencia_pago = models.CharField(max_length=50)
     tipo_pago = models.CharField(max_length=2, choices=TIPO_PAGO_CHOICES, default='PM')
-    
+
     # CORRECCIÓN OBLIGATORIA: Apuntamos al modelo User correcto y mejoramos el related_name a 'pagos'
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pagos')
+
+    # Captura de pantalla del comprobante de pago (opcional)
+    comprobante = models.ImageField(
+        upload_to='comprobantes/',
+        storage=DatabaseStorage(),
+        null=True,
+        blank=True,
+        verbose_name="Captura del comprobante de pago",
+    )
 
     def __str__(self):
         return f"Ref: {self.referencia_pago} - {self.get_tipo_pago_display()} - {self.usuario.username}"

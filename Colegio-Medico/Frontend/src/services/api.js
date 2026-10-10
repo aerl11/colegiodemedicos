@@ -192,13 +192,27 @@ export async function register(formData) {
   const data = await parseJsonOrThrow(res);
 
   if (!res.ok) {
-    // Devuelve el primer mensaje de error del servidor
-    const firstKey = Object.keys(data)[0];
-    const msg = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey];
-    throw new Error(msg || 'Error al registrar usuario.');
+    // Django devuelve errores por campo: { cedula: [...], email: [...], ... }
+    // o un error general { detail: "..." } / { non_field_errors: [...] }
+    const fieldErrors = {};
+    let generalMsg = null;
+    for (const [key, value] of Object.entries(data)) {
+      const msg = Array.isArray(value) ? value[0] : value;
+      if (typeof msg !== 'string') continue;
+      if (key === 'detail' || key === 'non_field_errors') {
+        generalMsg = msg;
+      } else {
+        fieldErrors[key] = msg;
+      }
+    }
+    const err = new Error(
+      generalMsg || Object.values(fieldErrors)[0] || 'Error al registrar usuario.'
+    );
+    err.fieldErrors = fieldErrors;
+    throw err;
   }
 
-  return data; // { message: "¡Registro exitoso!..." }
+  return data; // { message: "¡Registro exitoso!... }
 }
 
 /**
@@ -462,11 +476,24 @@ export async function deleteProgramacion(id) {
 /**
  * Registrar un Pago (el backend también crea la Inscripción automáticamente via jornada_id).
  * @param {object} pagoData – { fecha_pago, monto, referencia_pago, usuario, jornada_id }
+ * @param {File|null} [comprobante] – captura de pantalla del comprobante (opcional)
  */
-export async function createPago(pagoData) {
+export async function createPago(pagoData, comprobante = null) {
+  let body, headers;
+  if (comprobante) {
+    // Con imagen: enviamos multipart/form-data
+    body = new FormData();
+    Object.entries(pagoData).forEach(([key, value]) => body.append(key, value));
+    body.append('comprobante', comprobante);
+    headers = {}; // el navegador define el boundary automáticamente
+  } else {
+    body = JSON.stringify(pagoData);
+    headers = { 'Content-Type': 'application/json' };
+  }
   const res = await apiFetch('/pago/', {
     method: 'POST',
-    body: JSON.stringify(pagoData),
+    headers,
+    body,
   });
   if (!res.ok) {
     const data = await res.json();

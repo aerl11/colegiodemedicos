@@ -12,8 +12,11 @@ class PagoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pago
         # Añadimos 'id' por si React lo necesita para renderizar listas con sus keys
-        fields = ['id', 'fecha_pago', 'monto', 'referencia_pago', 'tipo_pago', 'usuario', 'usuario_data', 'jornada_id']
+        fields = ['id', 'fecha_pago', 'monto', 'referencia_pago', 'tipo_pago', 'comprobante', 'usuario', 'usuario_data', 'jornada_id']
         read_only_fields = ('id', 'usuario')
+        extra_kwargs = {
+            'comprobante': {'required': False, 'allow_null': True},
+        }
 
     def validate_referencia_pago(self, value):
         # Validación por código para asegurar que la referencia sea única

@@ -155,6 +155,71 @@ const ESPECIALIDADES = {
   ]
 };
 
+/* ── Validación de dominios de correo ── */
+// Dominios conocidos con sus errores de tipeo más comunes (incluye TLDs mal escritos)
+const DOMINIOS_CONOCIDOS = [
+  'gmail.com', 'hotmail.com', 'hotmail.es', 'outlook.com', 'outlook.es',
+  'yahoo.com', 'yahoo.es', 'yahoo.com.mx', 'yahoo.com.ar',
+  'icloud.com', 'live.com', 'live.com.mx', 'msn.com', 'aol.com',
+  'zoho.com', 'protonmail.com', 'proton.me', 'gmx.com', 'mail.com',
+  'me.com', 'ymail.com', 'rocketmail.com', 'facebook.com',
+];
+
+/**
+ * Detecta dominios mal escritos (ej. @gmail.con, @gamil.com, @hotmial.com)
+ * y devuelve un mensaje con la corrección sugerida, o null si el dominio
+ * es válido/incierto.
+ */
+const validarDominioCorreo = (dominio) => {
+  if (!dominio) return 'El correo no es válido';
+  const dom = dominio.toLowerCase().trim();
+
+  if (DOMINIOS_CONOCIDOS.includes(dom)) return null; // Dominio exacto válido
+
+  const [nombre, tld] = dom.split('.');
+  const TLDsValidos = ['com', 'es', 'net', 'org', 'mx', 'ar', 'co', 'cl', 'pe', 've', 'br', 'us', 'io', 'me'];
+
+  // El nombre del dominio coincide con uno conocido pero el TLD está mal (gmail.con, hotmail.cim)
+  const dominioBaseConocido = DOMINIOS_CONOCIDOS.find((d) => d.split('.')[0] === nombre);
+  if (dominioBaseConocido && (!tld || !TLDsValidos.includes(tld))) {
+    return `El dominio "${dominio}" no parece válido. ¿Quisiste decir "@${dominioBaseConocido}"?`;
+  }
+
+  // TLD correcto pero el nombre del dominio es casi igual a uno conocido (gamil.com, hotmial.com)
+  const parecido = DOMINIOS_CONOCIDOS.find((d) => {
+    const nombre2 = d.split('.')[0];
+    return nombre.length > 2 && nombre2.length > 2 && distanciaLevenshtein(nombre, nombre2) <= 2;
+  });
+  if (parecido && tld && TLDsValidos.includes(tld)) {
+    return `El dominio "${dominio}" no parece válido. ¿Quisiste decir "@${parecido}"?`;
+  }
+
+  // Cualquier otro texto sin TLD reconocible
+  if (!tld || !TLDsValidos.includes(tld)) {
+    return 'El dominio del correo no es válido. Revisa que termine en .com, .es, .net, etc.';
+  }
+  return null;
+};
+
+// Distancia de Levenshtein simple (cuántas letras hay que cambiar para pasar de una palabra a otra)
+const distanciaLevenshtein = (a, b) => {
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 3) return 99; // descarta comparaciones muy distintas
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return dp[m][n];
+};
+
 /* ── Componente principal ── */
 const Register = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -238,10 +303,10 @@ const Register = ({ onBack }) => {
       if (!formData.email.trim()) {
         newErrors.email = 'El correo electrónico es requerido';
       } else {
-        const local = formData.email.split('@')[0];
-        const domain = formData.email.split('@')[1];
-        if (!local || !domain || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-          newErrors.email = 'El correo no es válido';
+        const dominio = formData.email.split('@')[1] || '';
+        const errDominio = validarDominioCorreo(dominio);
+        if (errDominio) {
+          newErrors.email = errDominio;
         }
       }
       if (!formData.telefono.trim()) {
@@ -313,7 +378,12 @@ const Register = ({ onBack }) => {
     } catch (err) {
       // Si el backend devuelve un error estructurado, mapearlo a los campos
       const errorMsg = err.message || 'Ocurrió un error al registrar.';
-      setErrors({ apiError: errorMsg });
+      // Errores por campo específico (ej. cédula/correo/COMEZU duplicados) van al input correspondiente
+      if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...err.fieldErrors }));
+      } else {
+        setErrors({ apiError: errorMsg });
+      }
     } finally {
       setLoading(false);
     }
