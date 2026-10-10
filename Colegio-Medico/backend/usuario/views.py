@@ -105,9 +105,78 @@ class MedicosListView(generics.ListAPIView):
 class TokenRefreshView(SimpleJWTTokenRefreshView):
     permission_classes = [AllowAny]
 
+class SolicitudResetPasswordView(APIView):
+    """
+    Solicita un código de recuperación. Si el correo pertenece a más de un
+    usuario (ej. familiares que comparten Gmail), exige también el username
+    para generar el código únicamente de esa cuenta.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from django_rest_passwordreset.models import ResetPasswordToken
+        from django_rest_passwordreset.views import clear_expired_tokens
+        from django_rest_passwordreset.signals import reset_password_token_created
+
+        email = (request.data.get('email') or '').strip().lower()
+        username = (request.data.get('username') or '').strip()
+
+        if not email:
+            return Response(
+                {'email': ['Introduce tu correo electrónico.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        usuarios = list(User.objects.filter(email__iexact=email, is_active=True))
+
+        if not usuarios:
+            return Response(
+                {'email': ['No encontramos una cuenta con ese correo.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Correo compartido entre varias cuentas: se requiere el username
+        if len(usuarios) > 1:
+            if not username:
+                usernames = [u.username for u in usuarios]
+                return Response(
+                    {
+                        'requiere_username': True,
+                        'usernames': usernames,
+                        'detail': (
+                            'Este correo está asociado a varias cuentas. '
+                            'Introduce tu nombre de usuario para enviarte el código.'
+                        ),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            match = [u for u in usuarios if u.username.lower() == username.lower()]
+            if not match:
+                return Response(
+                    {'username': ['Ese nombre de usuario no corresponde a este correo.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            usuarios = match
+
+        user = usuarios[0]
+
+        # Genera (o reutiliza) el token de recuperación para esta cuenta
+        clear_expired_tokens()
+        token = ResetPasswordToken.objects.filter(user=user).first()
+        if not token:
+            token = ResetPasswordToken.objects.create(user=user)
+
+        reset_password_token_created.send(
+            sender=SolicitudResetPasswordView,
+            instance=self,
+            reset_password_token=token,
+        )
+
+        return Response({'status': 'OK'})
+
+
 class RegistroPublicoView(APIView):
     permission_classes = [AllowAny] # Permite el acceso sin enviar Token JWT
-
     def post(self, request):
         # Reutilizamos tu serializer de creación que ya tiene todas las validaciones
         serializer = EmployeeCreateUpdateSerializer(data=request.data)

@@ -66,29 +66,51 @@ const CheckIcon = () => (
 const ForgotPassword = ({ onBack, theme, toggleTheme }) => {
   const [step, setStep] = useState(1); // 1: correo, 2: código + nueva contraseña, 3: éxito
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernamesDisponibles, setUsernamesDisponibles] = useState([]);
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Paso 1: pedir el código por correo
-  const handleSendCode = async (e) => {
+  // Paso 1: pedir el código por correo (con username si el correo está compartido)
+  const enviarSolicitud = async (usernameExtra = null) => {
+    setError('');
+    setLoading(true);
+    try {
+      await requestPasswordReset(email.trim(), usernameExtra);
+      setUsernamesDisponibles([]);
+      setStep(2);
+    } catch (err) {
+      if (err.requiere_username) {
+        setUsernamesDisponibles(err.usernames || []);
+        // Si solo hay una cuenta asociada, la fijamos y reintentamos automáticamente
+        if (err.usernames && err.usernames.length === 1) {
+          setUsername(err.usernames[0]);
+          setLoading(false);
+          await enviarSolicitud(err.usernames[0]);
+          return;
+        }
+      }
+      setError(err.message || 'No se pudo enviar el código. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendCode = (e) => {
     e.preventDefault();
     setError('');
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) {
       setError('Introduce un correo electrónico válido.');
       return;
     }
-    setLoading(true);
-    try {
-      await requestPasswordReset(email.trim());
-      setStep(2);
-    } catch (err) {
-      setError(err.message || 'No se pudo enviar el código. Intenta de nuevo.');
-    } finally {
-      setLoading(false);
+    if (usernamesDisponibles.length > 1 && !username.trim()) {
+      setError('Selecciona tu nombre de usuario para continuar.');
+      return;
     }
+    enviarSolicitud(usernamesDisponibles.length > 0 ? username.trim() : null);
   };
 
   // Paso 2: validar código y restablecer contraseña
@@ -118,16 +140,8 @@ const ForgotPassword = ({ onBack, theme, toggleTheme }) => {
     }
   };
 
-  const handleResendCode = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await requestPasswordReset(email.trim());
-    } catch (err) {
-      setError(err.message || 'No se pudo reenviar el código.');
-    } finally {
-      setLoading(false);
-    }
+  const handleResendCode = () => {
+    enviarSolicitud(usernamesDisponibles.length > 0 ? username.trim() : null);
   };
 
   return (
@@ -182,6 +196,30 @@ const ForgotPassword = ({ onBack, theme, toggleTheme }) => {
                 </div>
 
                 {error && <span className="field-error-text">{error}</span>}
+
+                {usernamesDisponibles.length > 0 && (
+                  <div className="form-group">
+                    <label className="input-label">Nombre de Usuario</label>
+                    <div className="input-with-icon">
+                      <span className="field-icon"><ShieldIcon /></span>
+                      {usernamesDisponibles.length === 1 ? (
+                        <input type="text" className="reset-input" value={usernamesDisponibles[0]} readOnly />
+                      ) : (
+                        <select
+                          className="reset-input"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          disabled={loading}
+                        >
+                          <option value="">Selecciona tu usuario...</option>
+                          {usernamesDisponibles.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="reset-actions">
                   <button type="submit" className="continue-btn" disabled={loading}>

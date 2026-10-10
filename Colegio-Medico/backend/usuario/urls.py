@@ -21,6 +21,7 @@ from .views import (
     MedicosListView,
     panel_certificados_view,
     reporte_conferencistas_pdf_view,
+    SolicitudResetPasswordView,
 )
 
 router = DefaultRouter()
@@ -35,6 +36,7 @@ urlpatterns = [
     path('medicos-lista/', MedicosListView.as_view(), name='medicos-list'),
     path('auth/register/', RegistroPublicoView.as_view(), name='registro_publico'),
     path('password-reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
+    path('password-reset/solicitar/', SolicitudResetPasswordView.as_view(), name='solicitud_reset_password'),
     path('control-certificados/', panel_certificados_view, name='panel_certificados'),
     path('control-certificados/jornada/<int:jornada_id>/conferencistas-pdf/', reporte_conferencistas_pdf_view, name='reporte_conferencistas_pdf'),
 ]

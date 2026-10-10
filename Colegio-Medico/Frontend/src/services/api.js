@@ -215,20 +215,34 @@ export function logout() {
 /**
  * Paso 1: Solicitar el código de recuperación. Envía un correo con un
  * código de 6 dígitos al usuario registrado con ese email.
+ * Si el correo pertenece a varias cuentas (familiares que comparten Gmail),
+ * devuelve { requiere_username: true, usernames: [...] } y hay que reintentar
+ * enviando también el username.
  * @param {string} email
+ * @param {string} [username] – requerido solo si el correo está compartido
  */
-export async function requestPasswordReset(email) {
-  const res = await fetch(`${BASE_URL}/usuario/password-reset/`, {
+export async function requestPasswordReset(email, username = null) {
+  const body = { email };
+  if (username) body.username = username;
+  const res = await fetch(`${BASE_URL}/usuario/password-reset/solicitar/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(body),
   });
+  const data = await res.json().catch(() => ({}));
+
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const msg = data?.email?.[0] || data?.detail || 'Error al enviar el código de recuperación.';
+    const msg = data?.email?.[0] || data?.username?.[0] || data?.detail || 'Error al enviar el código de recuperación.';
     throw new Error(msg);
   }
-  return res.json().catch(() => ({}));
+  if (data.requiere_username) {
+    // Correo compartido: el backend pide el nombre de usuario
+    const err = new Error(data.detail || 'Este correo está asociado a varias cuentas.');
+    err.requiere_username = true;
+    err.usernames = data.usernames || [];
+    throw err;
+  }
+  return data;
 }
 
 /**
