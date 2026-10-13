@@ -6,13 +6,21 @@
   box-sizing: border-box;
 }
 
-html,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow-x: hidden;
+  min-height: 100%;
+  /* sin overflow-x:hidden aquí: convertía al body en contenedor de scroll
+     y en móvil el contenido alto del registro quedaba atrapado sin scroll */
   background: var(--bg);
 }
 
