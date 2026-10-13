@@ -1147,12 +1147,15 @@
   background: #0e1f3d;
   border: 1px solid rgba(168, 138, 77, 0.3);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  -webkit-overflow-scrolling: touch;
 }
 
 .inscripciones-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.88rem;
@@ -1442,4 +1445,68 @@
   height: 42px !important;
   line-height: 42px !important;
   cursor: pointer;
+}
+
+/* ---------- Responsive general (tablas, modales y formularios) ---------- */
+@media (max-width: 768px) {
+  .inscripciones-table th,
+  .inscripciones-table td {
+    padding: 0.75rem 0.8rem;
+    font-size: 0.82rem;
+    white-space: normal;
+  }
+
+  .inscripciones-table code {
+    word-break: break-all;
+  }
+
+  .modal-card,
+  .modal-content,
+  .modal {
+    max-width: 96vw !important;
+    width: 96vw !important;
+  }
+
+  .modal-card[style],
+  .modal-card.animate-fade-in[style] {
+    max-width: 96vw !important;
+    width: 96vw !important;
+  }
+
+  .modal-form .form-row {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .modal-form .form-row > .form-group {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .modal-form .form-row > .form-group[style*='flex: 1'],
+  .modal-form .form-row > .form-group[style*="flex: 1"] {
+    flex: 1 1 100% !important;
+  }
+
+  /* Teléfono: selector y número apilados en pantallas angostas */
+  .modal-form select[name='codigoPais'] {
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .modal-form input[name='telefono'] {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* Móviles muy angostos: mantén las tablas desplazables horizontalmente */
+@media (max-width: 480px) {
+  .inscripciones-table {
+    min-width: 640px;
+    font-size: 0.78rem;
+  }
 }

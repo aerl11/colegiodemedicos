@@ -1818,13 +1818,13 @@ const Dashboard = ({ onLogout }) => {
 
                 <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                   <label>Teléfono</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <select
                       name="codigoPais"
                       value={userForm.codigoPais || '58'}
                       onChange={handleUserChange}
                       className="register-input"
-                      style={{ flex: '0 0 auto', width: 'auto', minWidth: '180px' }}
+                      style={{ flex: '1 1 110px', width: 'auto', maxWidth: '130px', minWidth: '110px' }}
                       disabled={userLoading}
                     >
                       {CODIGOS_PAIS.map((c, i) => (
@@ -1841,7 +1841,7 @@ const Dashboard = ({ onLogout }) => {
                       placeholder={`Número sin código (máx. ${MAX_DIGITOS_TELEFONO})`}
                       maxLength={MAX_DIGITOS_TELEFONO}
                       className="register-input"
-                      style={{ flex: 1 }}
+                      style={{ flex: '2 1 160px', minWidth: '150px' }}
                       disabled={userLoading}
                     />
                   </div>
