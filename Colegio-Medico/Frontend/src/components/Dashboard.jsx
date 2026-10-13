@@ -158,6 +158,8 @@ const Dashboard = ({ onLogout }) => {
   ]);
   const [inscripciones, setInscripciones] = useState([]);
   const [pagos, setPagos] = useState([]);
+  // Buscador de pagos: filtra por nombre, correo, cédula o número de referencia
+  const [busquedaPago, setBusquedaPago] = useState('');
   const [activeTab, setActiveTab] = useState('jornadas'); // 'jornadas' o 'inscripciones'
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -666,6 +668,21 @@ const Dashboard = ({ onLogout }) => {
     return new Date(fechaStr).toLocaleDateString();
   };
 
+  // Pagos filtrados por el buscador (nombre, correo, cédula o referencia)
+  const pagosFiltrados = pagos.filter((pago) => {
+    const q = busquedaPago.trim().toLowerCase();
+    if (!q) return true;
+    const campos = [
+      pago.usuario_data?.first_name,
+      pago.usuario_data?.last_name,
+      pago.usuario_data?.email,
+      pago.usuario_data?.cedula,
+      pago.referencia_pago,
+      String(pago.monto ?? ''),
+    ];
+    return campos.some((c) => (c || '').toString().toLowerCase().includes(q));
+  });
+
   const handleDownloadReportePagos = async () => {
     setPdfLoading(true);
     try {
@@ -1155,8 +1172,24 @@ const Dashboard = ({ onLogout }) => {
                     </button>
                   )}
                 </div>
+
+                {/* Buscador por nombre o número de comprobante */}
+                {pagos.length > 0 && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <input
+                      type="search"
+                      value={busquedaPago}
+                      onChange={(e) => setBusquedaPago(e.target.value)}
+                      placeholder="🔍 Buscar por nombre, cédula, correo o N° de referencia..."
+                      className="buscador-pagos"
+                    />
+                  </div>
+                )}
+
                 {pagos.length === 0 ? (
                   <p className="no-data-msg">No hay reportes de pago registrados.</p>
+                ) : pagosFiltrados.length === 0 ? (
+                  <p className="no-data-msg">No se encontraron pagos que coincidan con la búsqueda.</p>
                 ) : (
                   <table className="inscripciones-table">
                     <thead>
@@ -1170,7 +1203,7 @@ const Dashboard = ({ onLogout }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {pagos.map((pago) => (
+                      {pagosFiltrados.map((pago) => (
                         <tr key={pago.id}>
                           {(user.rol === 'superadmin' || user.rol === 'staff') && (
                             <td className="table-bold">

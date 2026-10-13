@@ -1153,6 +1153,31 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ---------- Buscador de pagos ---------- */
+.buscador-pagos {
+  width: 100%;
+  max-width: 420px;
+  display: block;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 138, 77, 0.4);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1e293b;
+  font-size: 0.92rem;
+  font-family: 'Montserrat', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.buscador-pagos:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+}
+
+.buscador-pagos::placeholder {
+  color: #94a3b8;
+}
+
 .inscripciones-table {
   width: 100%;
   min-width: 720px;
