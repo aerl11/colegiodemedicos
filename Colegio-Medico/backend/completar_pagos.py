@@ -243,16 +243,13 @@ def run():
         es_ponente = 'ponente' in limpiar(monto_raw).lower() or 'exonerado' in limpiar(monto_raw).lower()
 
         with transaction.atomic():
-            # Crear inscripción si falta (también para ponentes/exonerados)
-            if not ya_inscrito:
-                Inscripcion.objects.get_or_create(
-                    usuario=user, jornada=jornada,
-                    defaults={'pago': None})
-                creados_insc += 1
-
-            # Crear pago solo si hay datos reales
+            # IMPORTANTE: crear el pago ANTES de la inscripción. La señal post_save
+            # de Inscripcion envía el correo de confirmación con el monto y la
+            # referencia; si la inscripción se crea sin pago, el correo sale con
+            # monto 0.00 y referencia N/A.
+            pago_creado = None
             if monto is not None and fecha is not None and not es_ponente:
-                Pago.objects.create(
+                pago_creado = Pago.objects.create(
                     fecha_pago=fecha,
                     monto=monto,
                     referencia_pago=(ref or f'SIN-REF-{user.id}')[:50],
@@ -261,12 +258,22 @@ def run():
                 )
                 pagos_user[user.id] = pagos_user.get(user.id, 0) + 1
                 creados_pago += 1
-                # Vincular el pago a la inscripción si no tiene
+
+            # Crear inscripción si falta (también para ponentes/exonerados),
+            # ya con su pago vinculado cuando existe
+            if not ya_inscrito:
+                Inscripcion.objects.get_or_create(
+                    usuario=user, jornada=jornada,
+                    defaults={'pago': pago_creado})
+                creados_insc += 1
+            elif pago_creado is not None:
+                # La inscripción ya existía: vincular el pago si no tiene uno
                 ins = Inscripcion.objects.filter(usuario=user, jornada=jornada, pago__isnull=True).first()
                 if ins:
-                    ins.pago = Pago.objects.filter(usuario=user).order_by('-id').first()
+                    ins.pago = pago_creado
                     ins.save(update_fields=['pago'])
-            elif es_ponente:
+
+            if pago_creado is None and es_ponente:
                 ponentes += 1
 
     print(f'Resultado: {creados_pago} pagos creados, {creados_insc} inscripciones creadas, '
