@@ -8,22 +8,22 @@ from django.contrib.auth.models import User
 from usuario.utils import reset_model_sequence
 
 class SessionAndAuthTimeoutTests(TestCase):
-    def test_session_settings_configured_for_five_minutes_inactivity(self):
+    def test_session_settings_configured_without_auto_logout(self):
         """
-        Verifica que la sesión de Django expire a los 5 minutos (300 segundos)
-        y se renueve con cada petición activa.
+        Verifica que la sesión de Django NO expire automáticamente
+        (30 días de vigencia y sin cierre al cerrar el navegador).
         """
-        self.assertEqual(settings.SESSION_COOKIE_AGE, 300)
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 60 * 24 * 30)
         self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
-        self.assertTrue(settings.SESSION_EXPIRE_AT_BROWSER_CLOSE)
+        self.assertFalse(settings.SESSION_EXPIRE_AT_BROWSER_CLOSE)
 
-    def test_jwt_token_lifetime_configured_for_five_minutes(self):
+    def test_jwt_token_lifetime_configured_without_auto_logout(self):
         """
-        Verifica que los tokens de acceso y refresco de JWT tengan una duración de 5 minutos
-        y que la rotación de refresh tokens esté habilitada.
+        Verifica que los tokens JWT tengan vigencia prolongada
+        (access 30 días, refresh 90 días) y rotación habilitada.
         """
-        self.assertEqual(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'], timedelta(minutes=5))
-        self.assertEqual(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'], timedelta(minutes=5))
+        self.assertEqual(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'], timedelta(days=30))
+        self.assertEqual(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'], timedelta(days=90))
         self.assertTrue(settings.SIMPLE_JWT['ROTATE_REFRESH_TOKENS'])
 
     def test_jwt_token_payload_expiration(self):
