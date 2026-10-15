@@ -241,22 +241,31 @@
 }
 
 .register-text {
-  color: #c5a059;
-  font-size: 13px; /* Reduced from 14px */
+  color: #e8e8e8;
+  font-size: 14px;
 }
 
 .register-btn-link {
-  background: none;
+  background: linear-gradient(135deg, #ffd700, #f0b429);
+  -webkit-background-clip: text;
+  background-clip: text;
   border: none;
-  color: #c5a059;
-  font-weight: 600;
+  color: transparent;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-shadow: none;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
   cursor: pointer;
   text-transform: uppercase;
   margin-left: 5px;
+  padding: 2px 4px;
+  transition: filter 0.2s ease;
 }
 
 .register-btn-link:hover {
   text-decoration: underline;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.9)) brightness(1.15);
 }
 
 .theme-toggle {
