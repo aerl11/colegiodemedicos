@@ -250,7 +250,13 @@ const Register = ({ onBack }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     // El teléfono solo acepta números (máximo 15 dígitos sin el código de país)
-    const finalValue = name === 'telefono' ? value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO) : value;
+    // La cédula y el número COMEZU solo aceptan números (sin letras, puntos ni comas)
+    let finalValue = value;
+    if (name === 'telefono') {
+      finalValue = value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO);
+    } else if (name === 'cedula' || name === 'comezu') {
+      finalValue = value.replace(/[^0-9]/g, '').slice(0, 12);
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: finalValue
@@ -448,6 +454,7 @@ const Register = ({ onBack }) => {
                         type="text"
                         name="cedula"
                         placeholder="Cédula"
+                        inputMode="numeric"
                         className={`register-input ${errors.cedula ? 'input-error' : ''}`}
                         value={formData.cedula}
                         onChange={handleChange}
@@ -482,6 +489,7 @@ const Register = ({ onBack }) => {
                           type="text"
                           name="comezu"
                           placeholder="Número COMEZU"
+                          inputMode="numeric"
                           className={`register-input ${errors.comezu ? 'input-error' : ''}`}
                           value={formData.comezu}
                           onChange={handleChange}
@@ -653,6 +661,7 @@ const Register = ({ onBack }) => {
                         type="text"
                         name="telefono"
                         placeholder={`Número sin código (máx. ${MAX_DIGITOS_TELEFONO} dígitos)`}
+                        inputMode="numeric"
                         maxLength={MAX_DIGITOS_TELEFONO}
                         className={`register-input ${errors.telefono ? 'input-error' : ''}`}
                         value={formData.telefono}

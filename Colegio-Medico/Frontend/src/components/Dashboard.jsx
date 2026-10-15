@@ -541,8 +541,10 @@ const Dashboard = ({ onLogout }) => {
 
   const handleUserChange = (e) => {
     const { name, value, type, checked } = e.target;
-    // El teléfono del admin solo acepta números (máx. 15 dígitos sin código de país)
-    const finalValue = name === 'telefono' ? value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO) : value;
+    // El teléfono y la cédula solo aceptan números (sin letras, puntos ni comas)
+    let finalValue = value;
+    if (name === 'telefono') finalValue = value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO);
+    else if (name === 'cedula') finalValue = value.replace(/[^0-9]/g, '').slice(0, 12);
     setUserForm(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : finalValue
@@ -1940,6 +1942,7 @@ const Dashboard = ({ onLogout }) => {
                     name="cedula"
                     value={userForm.cedula}
                     onChange={handleUserChange}
+                    inputMode="numeric"
                     placeholder="Ej. 12345678"
                     className="register-input"
                     required

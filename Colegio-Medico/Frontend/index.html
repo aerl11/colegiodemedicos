@@ -8,7 +8,34 @@
     <meta name="description" content="Sistema de gestión y registro para las Jornadas Médico Científicas del Colegio de Médicos." />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Respaldo: si el JavaScript falla al cargar (navegador muy antiguo),
+           se muestra este aviso en vez de una pantalla en blanco -->
+      <noscript>Para usar este sitio necesitas habilitar JavaScript en tu navegador.</noscript>
+      <div id="root-fallback" style="display:none; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:24px; font-family:sans-serif; background:#0b0f1a; color:#c5a059;">
+        <img src="/favicon.svg" alt="" style="width:64px; height:64px; margin-bottom:12px;" onerror="this.style.display='none'" />
+        <p style="font-size:16px; margin:0 0 8px;">No se pudo cargar la aplicación en este navegador.</p>
+        <p style="font-size:14px; color:#94a3b8; margin:0;">Tu navegador puede ser muy antiguo. Actualízalo o usa Google Chrome / Safari actualizado e inténtalo de nuevo.</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Si React no se montó en 8 segundos (ej. el bundle no se pudo ejecutar),
+      // mostramos el mensaje de respaldo para que no quede la pantalla en blanco.
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && !root.hasChildNodes()) {
+          var fb = document.getElementById('root-fallback');
+          if (fb) fb.style.display = 'flex';
+        }
+      }, 8000);
+      // Si hay un error de JS antes de que React monte, mostrar el aviso de inmediato.
+      window.addEventListener('error', function (e) {
+        if (e.target && e.target.tagName === 'SCRIPT') {
+          var fb = document.getElementById('root-fallback');
+          if (fb) fb.style.display = 'flex';
+        }
+      }, true);
+    </script>
   </body>
 </html>
