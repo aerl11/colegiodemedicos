@@ -251,11 +251,14 @@ const Register = ({ onBack }) => {
     const { name, value } = e.target;
     // El teléfono solo acepta números (máximo 15 dígitos sin el código de país)
     // La cédula y el número COMEZU solo aceptan números (sin letras, puntos ni comas)
+    // Los nombres y apellidos solo aceptan letras (incluyendo acentos y ñ) y espacios
     let finalValue = value;
     if (name === 'telefono') {
       finalValue = value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO);
     } else if (name === 'cedula' || name === 'comezu') {
       finalValue = value.replace(/[^0-9]/g, '').slice(0, 12);
+    } else if (['first_name', 'second_name', 'last_name', 'second_last_name'].includes(name)) {
+      finalValue = value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, '');
     }
     setFormData((prev) => ({
       ...prev,

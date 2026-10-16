@@ -294,6 +294,18 @@ class EmployeeCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Ya este correo electrónico está registrado.")
         return value
 
+    def validate_first_name(self, value):
+        import re
+        if value and not re.fullmatch(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+", value.strip()):
+            raise serializers.ValidationError("El nombre solo puede contener letras y espacios.")
+        return value
+
+    def validate_last_name(self, value):
+        import re
+        if value and not re.fullmatch(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+", value.strip()):
+            raise serializers.ValidationError("El apellido solo puede contener letras y espacios.")
+        return value
+
     def validate_cedula(self, value):
         if value:
             qs = PerfilUsuario.objects.filter(cedula=value)
