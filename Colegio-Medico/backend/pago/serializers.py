@@ -19,6 +19,13 @@ class PagoSerializer(serializers.ModelSerializer):
         }
 
     def validate_referencia_pago(self, value):
+        # Solo dígitos, máximo 20 caracteres
+        value = value.strip()
+        if not value.isdigit():
+            raise serializers.ValidationError("El número de referencia solo debe contener dígitos.")
+        if len(value) > 20:
+            raise serializers.ValidationError("El número de referencia no debe exceder 20 dígitos.")
+
         # Validación por código para asegurar que la referencia sea única
         queryset = Pago.objects.filter(referencia_pago=value)
 

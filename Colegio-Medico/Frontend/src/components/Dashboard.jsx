@@ -747,9 +747,13 @@ const Dashboard = ({ onLogout }) => {
 
   const handlePagoChange = (e) => {
     const { name, value } = e.target;
+    // La referencia solo acepta dígitos, máximo 20 caracteres
+    const processedValue = name === 'referencia_pago'
+      ? value.replace(/\D/g, '').slice(0, 20)
+      : value;
     setPagoForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
   };
 
@@ -761,6 +765,10 @@ const Dashboard = ({ onLogout }) => {
     }
     if (!pagoForm.referencia_pago.trim()) {
       setPagoError('El número de referencia es requerido.');
+      return;
+    }
+    if (!/^\d{1,20}$/.test(pagoForm.referencia_pago.trim())) {
+      setPagoError('El número de referencia solo debe contener dígitos (máximo 20).');
       return;
     }
     if (!pagoForm.monto || parseFloat(pagoForm.monto) <= 0) {
@@ -1481,6 +1489,9 @@ const Dashboard = ({ onLogout }) => {
                     onChange={handlePagoChange}
                     placeholder="Ingrese la referencia"
                     className="register-input"
+                    inputMode="numeric"
+                    maxLength={20}
+                    pattern="\d*"
                     required
                     disabled={pagoLoading}
                   />
