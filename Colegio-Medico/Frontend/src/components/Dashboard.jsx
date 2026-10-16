@@ -541,11 +541,11 @@ const Dashboard = ({ onLogout }) => {
 
   const handleUserChange = (e) => {
     const { name, value, type, checked } = e.target;
-    // El teléfono y la cédula solo aceptan números (sin letras, puntos ni comas)
+    // El teléfono, la cédula y el número COMEZU solo aceptan números (sin letras, puntos ni comas)
     // Los nombres y apellidos solo aceptan letras (incluyendo acentos y ñ) y espacios
     let finalValue = value;
     if (name === 'telefono') finalValue = value.replace(/\D/g, '').slice(0, MAX_DIGITOS_TELEFONO);
-    else if (name === 'cedula') finalValue = value.replace(/[^0-9]/g, '').slice(0, 12);
+    else if (name === 'cedula' || name === 'comezu') finalValue = value.replace(/[^0-9]/g, '').slice(0, 12);
     else if (name === 'first_name' || name === 'last_name') finalValue = value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, '');
     setUserForm(prev => ({
       ...prev,
@@ -1976,6 +1976,10 @@ const Dashboard = ({ onLogout }) => {
                       value={userForm.comezu}
                       onChange={handleUserChange}
                       placeholder="Nº COMEZU"
+                      inputMode="numeric"
+                      pattern="\d*"
+                      maxLength={12}
+                      autoComplete="off"
                       className="register-input"
                       disabled={userLoading}
                     />
