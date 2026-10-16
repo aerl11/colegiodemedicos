@@ -275,6 +275,19 @@ const Register = ({ onBack }) => {
     }
   };
 
+  // Barrera defensiva: los campos de nombre/apellido NUNCA deben guardar dígitos
+  // (se aplica también en pegado y autocompletado del navegador)
+  const sanitizarNombres = (data) => {
+    const limpiar = (v = '') => v.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, '');
+    return {
+      ...data,
+      first_name: limpiar(data.first_name),
+      second_name: limpiar(data.second_name),
+      last_name: limpiar(data.last_name),
+      second_last_name: limpiar(data.second_last_name),
+    };
+  };
+
   const handleTipoChange = (tipoValue) => {
     setFormData((prev) => ({
       ...prev,
@@ -301,7 +314,9 @@ const Register = ({ onBack }) => {
       if (!formData.tipo) newErrors.tipo = 'Debe seleccionar una identificación';
       if (!formData.cedula.trim()) newErrors.cedula = 'La cédula es requerida';
       if (!formData.first_name.trim()) newErrors.first_name = 'El primer nombre es requerido';
+      else if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/.test(formData.first_name.trim())) newErrors.first_name = 'El nombre solo puede contener letras';
       if (!formData.last_name.trim()) newErrors.last_name = 'El primer apellido es requerido';
+      else if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/.test(formData.last_name.trim())) newErrors.last_name = 'El apellido solo puede contener letras';
       if (!formData.genero) newErrors.genero = 'El género es requerido';
 
       if (formData.tipo === 'D') {
@@ -336,6 +351,8 @@ const Register = ({ onBack }) => {
   };
 
   const handleNext = () => {
+    // Sanitizar nombres antes de avanzar de paso (por si algo se coló)
+    setFormData((prev) => sanitizarNombres(prev));
     if (validateStep(currentStep)) {
       setCurrentStep((prev) => prev + 1);
     }
