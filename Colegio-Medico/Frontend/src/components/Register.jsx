@@ -321,6 +321,7 @@ const Register = ({ onBack }) => {
 
       if (formData.tipo === 'D') {
         if (!formData.comezu.trim()) newErrors.comezu = 'El número COMEZU es requerido';
+        else if (!/^\d+$/.test(formData.comezu.trim())) newErrors.comezu = 'El número COMEZU solo puede contener dígitos';
         if (!formData.especialidad.trim()) newErrors.especialidad = 'La especialidad es requerida';
       }
     } else if (step === 2) {
@@ -510,6 +511,9 @@ const Register = ({ onBack }) => {
                           name="comezu"
                           placeholder="Número COMEZU"
                           inputMode="numeric"
+                          pattern="\d*"
+                          maxLength={12}
+                          autoComplete="off"
                           className={`register-input ${errors.comezu ? 'input-error' : ''}`}
                           value={formData.comezu}
                           onChange={handleChange}

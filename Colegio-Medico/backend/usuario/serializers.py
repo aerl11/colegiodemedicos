@@ -317,6 +317,9 @@ class EmployeeCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate_comezu(self, value):
         if value:
+            import re
+            if not re.fullmatch(r"\d+", value.strip()):
+                raise serializers.ValidationError("El número de COMEZU solo puede contener dígitos.")
             qs = PerfilUsuario.objects.filter(comezu=value)
             if self.instance:
                 qs = qs.exclude(user_id=self.instance.pk)
